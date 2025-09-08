@@ -1,4 +1,5 @@
 from Instructor import Instructor
+from PublicInstructorProfile import PublicInstructorProfile 
 
 def run_case(title: str, fn, should_fail: bool = False) -> None:
     try:
@@ -8,6 +9,9 @@ def run_case(title: str, fn, should_fail: bool = False) -> None:
         else:
             print(f"[OK] {title}")
             if isinstance(obj, Instructor):
+                print("  full: ", str(obj))
+                print("  short:", obj.to_short_string())
+            elif isinstance(obj, PublicInstructorProfile):
                 print("  full: ", str(obj))
                 print("  short:", obj.to_short_string())
     except Exception as e:
@@ -34,7 +38,7 @@ if __name__ == "__main__":
          make(1, "Иванов", "   ", None, "+7 999 111-22-33", 3), True),
 
         ("Пустая строка как отчество (нужно None)",
-         make(1, "Иванов", "Иван", "   ", "+7 999 111-22-33", 3), True),
+            make(1, "Иванов", "Иван", "   ", "+7 999 111-22-33", 3), True),
 
         ("Короткий телефон",
          make(1, "Иванов", "Иван", None, "123", 3), True),
@@ -86,6 +90,26 @@ if __name__ == "__main__":
     print("c short: ", c.to_short_string())
 
     print("\nРезультаты сравнения:")
-    print("  a == b ?", a == b) 
+    print("  a == b ?", a == b)
     print("  a == c ?", a == c)
 
+    print("\nПубличный профиль (короткая версия):")
+    pub_a = PublicInstructorProfile.from_instructor(a)
+    pub_b = PublicInstructorProfile.from_instructor(b, contact_override="+7 911 111-11-11")
+    pub_c = PublicInstructorProfile.from_dict({
+        "id": 1000,
+        "name": "Иванов И.И.",
+        "phone": "+7 900 000-00-00",
+        "exp": 6
+    })
+
+    print("pub_a full:  ", pub_a)
+    print("pub_a short: ", pub_a.to_short_string())
+    print("pub_b full:  ", pub_b)
+    print("pub_b short: ", pub_b.to_short_string())
+    print("pub_c full:  ", pub_c)
+    print("pub_c short: ", pub_c.to_short_string())
+
+    print("\nСравнение публичных профилей (display_name + contact + exp):")
+    print("  pub_a == pub_b ?", pub_a == pub_b)
+    print("  pub_a == pub_c ?", pub_a == pub_c)
