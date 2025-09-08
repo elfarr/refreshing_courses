@@ -8,12 +8,56 @@ class Instructor:
                  patronymic: Optional[str],
                  phone: str,
                  experience_years: int):
-        self.__instructor_id = instructor_id
-        self.__last_name = last_name
-        self.__first_name = first_name
-        self.__patronymic = patronymic
-        self.__phone = phone
-        self.__experience_years = experience_years
+        self.set_instructor_id(instructor_id)
+        self.set_last_name(last_name)
+        self.set_first_name(first_name)
+        self.set_patronymic(patronymic)
+        self.set_phone(phone)
+        self.set_experience_years(experience_years)
+
+    @staticmethod
+    def validate_instructor_id(value: int) -> int:
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError("instructor_id должен быть положительным целым числом")
+        return value
+
+    @staticmethod
+    def validate_name(value: str, field: str) -> str:
+        if not isinstance(value, str):
+            raise ValueError(f"{field} должен быть строкой")
+        if not (v):
+            raise ValueError(f"{field} не может быть пустым")
+        return v
+
+    @staticmethod
+    def validate_patronymic(value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("patronymic должен быть строкой или None")
+        v = value.strip()
+        if not v == "":
+            raise ValueError("patronymic не может быть пустой строкой; используйте None, если отчества нет")
+        return v
+
+    @staticmethod
+    def validate_phone(value: str) -> str:
+        if not isinstance(value, str):
+            raise ValueError("phone должен быть строкой")
+        v = value.strip()
+        if len(v) < 5:
+            raise ValueError("phone слишком короткий")
+        allowed = set("+ -()0123456789")
+        for ch in v:
+            if ch not in allowed:
+                raise ValueError("phone содержит недопустимые символы (разрешены цифры, пробел, + - ( ))")
+        return v
+
+    @staticmethod
+    def validate_experience_years(value: int) -> int:
+        if not isinstance(value, int) or value < 0 or value > 80:
+            raise ValueError("experience_years должен быть целым числом в диапазоне 0..80")
+        return value
 
     def get_instructor_id(self) -> int:
         return self.__instructor_id
@@ -34,19 +78,19 @@ class Instructor:
         return self.__experience_years
 
     def set_instructor_id(self, value: int) -> None:
-        self.__instructor_id = value
+        self.__instructor_id = Instructor.validate_instructor_id(value)
 
     def set_last_name(self, value: str) -> None:
-        self.__last_name = value
+        self.__last_name = Instructor.validate_name(value, "last_name")
 
     def set_first_name(self, value: str) -> None:
-        self.__first_name = value
+        self.__first_name = Instructor.validate_name(value, "first_name")
 
     def set_patronymic(self, value: Optional[str]) -> None:
-        self.__patronymic = value
+        self.__patronymic = Instructor.validate_patronymic(value)
 
     def set_phone(self, value: str) -> None:
-        self.__phone = value
+        self.__phone = Instructor.validate_phone(value)
 
     def set_experience_years(self, value: int) -> None:
-        self.__experience_years = value
+        self.__experience_years = Instructor.validate_experience_years(value)
