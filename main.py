@@ -44,6 +44,27 @@ if __name__ == "__main__":
 
         ("Опыт > 80 лет",
          make(1, "Иванов", "Иван", None, "+7 999 111-22-33", 120), True),
+
+        ("from_string OK",
+         (lambda: Instructor.from_string("2;Петров;Пётр;;+7 (901) 111-22-33;3")), False),
+
+        ("from_string BAD (мало полей)",
+         (lambda: Instructor.from_string("2;Петров;Пётр")), True),
+
+        ("from_json OK (базовые ключи)",
+         (lambda: Instructor.from_json('{"instructor_id":3,"last_name":"Сидоров","first_name":"Сидор","patronymic":null,"phone":"+7 902 333-44-55","experience_years":10}')), False),
+
+        ("from_json OK (синонимы id/exp)",
+         (lambda: Instructor.from_json('{"id":4,"last_name":"Кузнецов","first_name":"Денис","phone":"+7 903 555-66-77","exp":1}')), False),
+
+        ("from_json BAD (битый json)",
+         (lambda: Instructor.from_json('{"id": "не число"')), True),
+
+        ("from_dict OK (синонимы id/exp)",
+         (lambda: Instructor.from_dict({"id": 5, "last_name": "Новиков", "first_name": "Олег", "patronymic": "", "phone": "+7 904 777-88-99", "exp": 6})), False),
+
+        ("from_dict BAD (нет last_name)",
+         (lambda: Instructor.from_dict({"id": 6, "first_name": "Юрий", "phone": "+7 905 000-00-00", "exp": 2})), True),
     ]
 
     for title, fn, should_fail in cases:

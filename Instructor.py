@@ -1,4 +1,5 @@
-from typing import Optional
+import json
+from typing import Optional, Iterable
 
 class Instructor:
     def __init__(self,
@@ -106,3 +107,42 @@ class Instructor:
     @experience_years.setter
     def experience_years(self, value: int) -> None:
         self.__experience_years = Instructor.validate_experience_years(value)
+
+    @classmethod
+    def from_string(cls, s: str, sep: str = ";") -> "Instructor":
+        parts = [p.strip() for p in s.split(sep)]
+        if len(parts) != 6:
+            raise ValueError("from_string ожидает 6 полей: id;last;first;patronymic;phone;exp")
+        pid, last, first, patr, phone, exp = parts
+        patronymic = None if patr == "" else patr
+        return cls(int(pid), last, first, patronymic, phone, int(exp))
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "Instructor":
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Instructor":
+        def pick(*names, default=None):
+            for n in names:
+                if n in d:
+                    return d[n]
+            return default
+        return cls(
+            instructor_id=pick("instructor_id", "id"),
+            last_name=pick("last_name"),
+            first_name=pick("first_name"),
+            patronymic=pick("patronymic"),
+            phone=pick("phone"),
+            experience_years=pick("experience_years", "exp"),
+        )
+
+    @classmethod
+    def from_csv_row(cls, row: Iterable[str]) -> "Instructor":
+        parts = [str(x).strip() for x in row]
+        if len(parts) != 6:
+            raise ValueError("from_csv_row ожидает ровно 6 столбцов")
+        pid, last, first, patr, phone, exp = parts
+        patronymic = None if patr == "" else patr
+        return cls(int(pid), last, first, patronymic, phone, int(exp))
