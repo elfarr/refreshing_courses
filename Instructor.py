@@ -146,3 +146,21 @@ class Instructor:
         pid, last, first, patr, phone, exp = parts
         patronymic = None if patr == "" else patr
         return cls(int(pid), last, first, patronymic, phone, int(exp))
+
+    def __str__(self) -> str:
+        return (f"Instructor(id={self.instructor_id}, "
+                f"last_name='{self.last_name}', first_name='{self.first_name}', "
+                f"patronymic={repr(self.patronymic)}, phone='{self.phone}', "
+                f"experience_years={self.experience_years})")
+
+    def to_short_string(self) -> str:
+        fi = (self.first_name[:1] + ".") if self.first_name else ""
+        pi = (self.patronymic[:1] + ".") if self.patronymic else ""
+        return f"{self.last_name} {fi}{pi}"
+
+    def __eq__(self, other) -> bool:
+        return (
+            isinstance(other, Instructor)
+            and (self.last_name, self.first_name, self.patronymic, self.experience_years)
+            == (other.last_name, other.first_name, other.patronymic, other.experience_years)
+        )

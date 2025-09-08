@@ -2,11 +2,14 @@ from Instructor import Instructor
 
 def run_case(title: str, fn, should_fail: bool = False) -> None:
     try:
-        fn()
+        obj = fn()
         if should_fail:
             print(f"[FAIL] {title} -> ожидалась ошибка, но её нет")
         else:
             print(f"[OK] {title}")
+            if isinstance(obj, Instructor):
+                print("  full: ", str(obj))
+                print("  short:", obj.to_short_string())
     except Exception as e:
         if should_fail:
             print(f"[OK] {title} -> поймали ожидаемую ошибку: {e}")
@@ -69,3 +72,20 @@ if __name__ == "__main__":
 
     for title, fn, should_fail in cases:
         run_case(title, fn, should_fail)
+
+    print("\nСравнение на равенство (по ФИО + стаж):")
+    a = Instructor(10, "Иванов", "Иван", "Иванович", "+7 900 000-00-00", 5)
+    b = Instructor(999, "Иванов", "Иван", "Иванович", "+7 999 999-99-99", 5)
+    c = Instructor(1000, "Иванов", "Иван", "Иванович", "+7 900 000-00-00", 6)
+
+    print("a full:  ", a)
+    print("a short: ", a.to_short_string())
+    print("b full:  ", b)
+    print("b short: ", b.to_short_string())
+    print("c full:  ", c)
+    print("c short: ", c.to_short_string())
+
+    print("\nРезультаты сравнения:")
+    print("  a == b ?", a == b) 
+    print("  a == c ?", a == c)
+
