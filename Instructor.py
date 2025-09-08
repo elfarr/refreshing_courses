@@ -8,12 +8,12 @@ class Instructor:
                  patronymic: Optional[str],
                  phone: str,
                  experience_years: int):
-        self.set_instructor_id(instructor_id)
-        self.set_last_name(last_name)
-        self.set_first_name(first_name)
-        self.set_patronymic(patronymic)
-        self.set_phone(phone)
-        self.set_experience_years(experience_years)
+        self.instructor_id = instructor_id
+        self.last_name = last_name
+        self.first_name = first_name
+        self.patronymic = patronymic
+        self.phone = phone
+        self.experience_years = experience_years
 
     @staticmethod
     def validate_instructor_id(value: int) -> int:
@@ -25,7 +25,8 @@ class Instructor:
     def validate_name(value: str, field: str) -> str:
         if not isinstance(value, str):
             raise ValueError(f"{field} должен быть строкой")
-        if not (v):
+        v = value.strip()
+        if v == "":
             raise ValueError(f"{field} не может быть пустым")
         return v
 
@@ -36,7 +37,7 @@ class Instructor:
         if not isinstance(value, str):
             raise ValueError("patronymic должен быть строкой или None")
         v = value.strip()
-        if not v == "":
+        if v == "":
             raise ValueError("patronymic не может быть пустой строкой; используйте None, если отчества нет")
         return v
 
@@ -48,9 +49,8 @@ class Instructor:
         if len(v) < 5:
             raise ValueError("phone слишком короткий")
         allowed = set("+ -()0123456789")
-        for ch in v:
-            if ch not in allowed:
-                raise ValueError("phone содержит недопустимые символы (разрешены цифры, пробел, + - ( ))")
+        if any(ch not in allowed for ch in v):
+            raise ValueError("phone содержит недопустимые символы (разрешены цифры, пробел, + - ( ))")
         return v
 
     @staticmethod
@@ -59,38 +59,50 @@ class Instructor:
             raise ValueError("experience_years должен быть целым числом в диапазоне 0..80")
         return value
 
-    def get_instructor_id(self) -> int:
+    @property
+    def instructor_id(self) -> int:
         return self.__instructor_id
 
-    def get_last_name(self) -> str:
-        return self.__last_name
-
-    def get_first_name(self) -> str:
-        return self.__first_name
-
-    def get_patronymic(self) -> Optional[str]:
-        return self.__patronymic
-
-    def get_phone(self) -> str:
-        return self.__phone
-
-    def get_experience_years(self) -> int:
-        return self.__experience_years
-
-    def set_instructor_id(self, value: int) -> None:
+    @instructor_id.setter
+    def instructor_id(self, value: int) -> None:
         self.__instructor_id = Instructor.validate_instructor_id(value)
 
-    def set_last_name(self, value: str) -> None:
+    @property
+    def last_name(self) -> str:
+        return self.__last_name
+
+    @last_name.setter
+    def last_name(self, value: str) -> None:
         self.__last_name = Instructor.validate_name(value, "last_name")
 
-    def set_first_name(self, value: str) -> None:
+    @property
+    def first_name(self) -> str:
+        return self.__first_name
+
+    @first_name.setter
+    def first_name(self, value: str) -> None:
         self.__first_name = Instructor.validate_name(value, "first_name")
 
-    def set_patronymic(self, value: Optional[str]) -> None:
+    @property
+    def patronymic(self) -> Optional[str]:
+        return self.__patronymic
+
+    @patronymic.setter
+    def patronymic(self, value: Optional[str]) -> None:
         self.__patronymic = Instructor.validate_patronymic(value)
 
-    def set_phone(self, value: str) -> None:
+    @property
+    def phone(self) -> str:
+        return self.__phone
+
+    @phone.setter
+    def phone(self, value: str) -> None:
         self.__phone = Instructor.validate_phone(value)
 
-    def set_experience_years(self, value: int) -> None:
+    @property
+    def experience_years(self) -> int:
+        return self.__experience_years
+
+    @experience_years.setter
+    def experience_years(self, value: int) -> None:
         self.__experience_years = Instructor.validate_experience_years(value)

@@ -1,52 +1,50 @@
 from Instructor import Instructor
 
-def show_ok(title: str, fn):
+def run_case(title: str, fn, should_fail: bool = False) -> None:
     try:
         fn()
-        print(f"[OK] {title}")
+        if should_fail:
+            print(f"[FAIL] {title} -> ожидалась ошибка, но её нет")
+        else:
+            print(f"[OK] {title}")
     except Exception as e:
-        print(f"[FAIL] {title} -> не ожидал ошибку: {e}")
+        if should_fail:
+            print(f"[OK] {title} -> поймали ожидаемую ошибку: {e}")
+        else:
+            print(f"[FAIL] {title} -> не ожидал ошибку: {e}")
 
-def show_fail(title: str, fn):
-    try:
-        fn()
-        print(f"[FAIL] {title} -> ожидалась ошибка, но её нет")
-    except Exception as e:
-        print(f"[OK] {title} -> поймали ожидаемую ошибку: {e}")
+def make(*args, **kwargs):
+    return lambda: Instructor(*args, **kwargs)
 
 if __name__ == "__main__":
-    def create_valid():
-        instr = Instructor(
-            instructor_id=1,
-            last_name="Иванов",
-            first_name="Иван",
-            patronymic="Иванович",
-            phone="+7 (900) 123-45-67",
-            experience_years=5
-        )
+    cases = [
+        ("Создание корректного Instructor",
+         make(1, "Иванов", "Иван", "Иванович", "+7 (900) 123-45-67", 5), False),
 
-    show_ok("Создание корректного Instructor", create_valid)
+        ("Отрицательный instructor_id",
+         make(-1, "Иванов", "Иван", None, "+7 999 111-22-33", 3), True),
 
-    show_fail("Отрицательный instructor_id",
-              lambda: Instructor(-1, "Иванов", "Иван", None, "+7 999 111-22-33", 3))
+        ("Пустая фамилия",
+         make(1, "   ", "Иван", None, "+7 999 111-22-33", 3), True),
 
-    show_fail("Пустая фамилия",
-              lambda: Instructor(1, "   ", "Иван", None, "+7 999 111-22-33", 3))
+        ("Пустое имя",
+         make(1, "Иванов", "   ", None, "+7 999 111-22-33", 3), True),
 
-    show_fail("Пустое имя",
-              lambda: Instructor(1, "Иванов", "   ", None, "+7 999 111-22-33", 3))
+        ("Пустая строка как отчество (нужно None)",
+         make(1, "Иванов", "Иван", "   ", "+7 999 111-22-33", 3), True),
 
-    show_fail("Пустая строка как отчество (должно быть None, если нет)",
-              lambda: Instructor(1, "Иванов", "Иван", "   ", "+7 999 111-22-33", 3))
+        ("Короткий телефон",
+         make(1, "Иванов", "Иван", None, "123", 3), True),
 
-    show_fail("Короткий телефон",
-              lambda: Instructor(1, "Иванов", "Иван", None, "123", 3))
+        ("Телефон с недопустимыми символами",
+         make(1, "Иванов", "Иван", None, "+7 999 111-22-33 ext.5", 3), True),
 
-    show_fail("Телефон с недопустимыми символами",
-              lambda: Instructor(1, "Иванов", "Иван", None, "+7 999 111-22-33 ext.5", 3))
+        ("Опыт отрицательный",
+         make(1, "Иванов", "Иван", None, "+7 999 111-22-33", -2), True),
 
-    show_fail("Опыт отрицательный",
-              lambda: Instructor(1, "Иванов", "Иван", None, "+7 999 111-22-33", -2))
+        ("Опыт > 80 лет",
+         make(1, "Иванов", "Иван", None, "+7 999 111-22-33", 120), True),
+    ]
 
-    show_fail("Опыт > 80 лет",
-              lambda: Instructor(1, "Иванов", "Иван", None, "+7 999 111-22-33", 120))
+    for title, fn, should_fail in cases:
+        run_case(title, fn, should_fail)
