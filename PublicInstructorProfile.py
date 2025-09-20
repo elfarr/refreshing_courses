@@ -1,15 +1,47 @@
-from typing import Optional
 from Instructor import Instructor
+import json
 
 class PublicInstructorProfile(Instructor):
     def __init__(self,
-                 instructor_id: int,
-                 last_name: str,
-                 first_name: str,
-                 patronymic: Optional[str],
-                 phone: str,
-                 experience_years: int,
-                 contact_override: Optional[str] = None):
+                 instructor_id: int | str | dict | Instructor,
+                 last_name: str | None = None,
+                 first_name: str | None = None,
+                 patronymic: str | None = None,
+                 phone: str | None = None,
+                 experience_years: int | None = None,
+                 contact_override: str | None = None):
+        if isinstance(instructor_id, Instructor):
+            instr = instructor_id
+            super().__init__(instr.instructor_id, instr.last_name, instr.first_name,
+                             instr.patronymic, instr.phone, instr.experience_years)
+            self.__contact_override = contact_override
+            return
+        
+        if isinstance(instructor_id, dict):
+            d = instructor_id
+            super().__init__(
+                instructor_id=d.get("instructor_id") or d.get("id"),
+                last_name=d.get("last_name") or d.get("surname") or d.get("last"),
+                first_name=d.get("first_name") or d.get("first"),
+                patronymic=d.get("patronymic") or d.get("middle_name"),
+                phone=d.get("phone") or d.get("contact") or d.get("tel"),
+                experience_years=d.get("experience_years") or d.get("exp")
+            )
+            self.__contact_override = d.get("contact") or d.get("public_contact")
+            return
+        
+        if isinstance(instructor_id, str) and last_name is None:
+            s = instructor_id.strip()
+            if s.startswith("{"):
+                d = json.loads(s)
+                self.__init__(d)
+                return
+            parts = [p.strip() for p in s.split(";")]
+            if len(parts) < 6:
+                raise ValueError("Строка должна содержать минимум 6 полей: id;last;first;patronymic;phone;exp")
+            pid, last, first, patr, phone, exp, *rest = parts
+            self.__init__(int(pid), last, first, None if patr == "" else patr, phone, int(exp), *rest)
+            return
         super().__init__(instructor_id, last_name, first_name, patronymic, phone, experience_years)
         self.__contact_override = contact_override
 
@@ -18,7 +50,7 @@ class PublicInstructorProfile(Instructor):
         return self.__contact_override if self.__contact_override else self.phone
 
     @contact.setter
-    def contact(self, value: Optional[str]) -> None:
+    def contact(self, value: str | None) -> None:
         self.__contact_override = None if value is None else self.validate_phone(value)
 
     @property
@@ -34,46 +66,3 @@ class PublicInstructorProfile(Instructor):
 
     def to_short_string(self) -> str:
         return self.display_name
-
-    @classmethod
-    def from_instructor(cls, instr: Instructor, contact_override: Optional[str] = None) -> "PublicInstructorProfile":
-        return cls(instr.instructor_id, instr.last_name, instr.first_name,
-                   instr.patronymic, instr.phone, instr.experience_years,
-                   contact_override=contact_override)
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "PublicInstructorProfile":
-        def pick(*names, default=None):
-            for n in names:
-                if n in d and d[n] is not None:
-                    return d[n]
-            return default
-
-        instr_id = pick("instructor_id", "id")
-        phone = pick("phone", "contact", "tel")
-        exp = pick("experience_years", "exp")
-
-        last = pick("last_name", "surname", "last")
-        first = pick("first_name", "first")
-        patr = pick("patronymic", "middle_name")
-
-        name = pick("display_name", "name")
-        if (not last or not first) and name:
-            parts = str(name).strip().split()
-            if parts:
-                last = last or parts[0]
-                initials = "".join(parts[1:]) if len(parts) > 1 else ""
-                if not first:
-                    first = initials[:1] or "?"      
-                if not patr and len(initials) >= 2:
-                    patr = initials[1:2] or None
-
-        return cls(
-            instructor_id=instr_id,
-            last_name=last,
-            first_name=first,
-            patronymic=patr if patr != "" else None,
-            phone=phone,
-            experience_years=exp,
-            contact_override=pick("contact", "public_contact")
-        )
