@@ -1,0 +1,12 @@
+- instructor_id: 1
+  last_name: Иванов
+  first_name: Иван
+  patronymic: Иванович
+  phone: '+79000000001'
+  experience_years: 5
+- instructor_id: 2
+  last_name: Петров
+  first_name: Пётр
+  patronymic: Петрович
+  phone: '+79000000022'
+  experience_years: 4
