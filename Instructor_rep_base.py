@@ -13,6 +13,7 @@ class InstructorRepBase(ABC):
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
 
     ## методы будут реализованы в наследниках
+    # сами пути к файлам скрыты в методах репозиториев и не подаются снаружи
     @abstractmethod
     def _load_raw(self) -> List[dict]:
         ...
@@ -72,6 +73,7 @@ class InstructorRepBase(ABC):
         self.write_all(items)
         return items
 
+    # автогенерация id
     def add(self, item: Instructor) -> Instructor:
         rows = self._load_raw()
         max_id = max((int(r.get("instructor_id", 0)) for r in rows), default=0)
