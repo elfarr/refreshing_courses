@@ -5,6 +5,9 @@ from instructor_repo_iface import InstructorRepo
 from repo_decorators import DbFilterSortDecorator
 from spec import QuerySpec
 
+from file_repo_decorator import FileFilterSortDecorator
+from file_spec import FileQuerySpec
+
 
 def clear_repo(repo: InstructorRepo) -> None:
     while True:
@@ -64,9 +67,50 @@ def smoke_db_with_decorator():
     print("пагинация (без отчества)):", [p.to_short_string() for p in deco.get_k_n_short_list(1, 10, spec2)])
 
 
+# === демонстрация декоратора для файловых репозиториев (JSON/YAML) ===
+def smoke_files_with_decorator():
+    print("=== JSON (adapter + file decorator) ===")
+    j = JsonRepoAdapter("instructors.json")
+    clear_repo(j)
+    j.add(Instructor(20, "Иванов", "Иван", "Иванович", "+79000000020", 5))
+    j.add(Instructor(21, "Петров", "Пётр", None, "+79000000021", 3))
+    j.add(Instructor(22, "Сидорова", "Анна", None, "+79000000022", 7))
+    j.add(Instructor(23, "Иванова", "Алёна", None, "+79000000023", 9))
+    fj = FileFilterSortDecorator(j)
+
+    print("количество (без фильтров):", fj.get_count())
+    print("пагинация (без фильтров):", [p.to_short_string() for p in fj.get_k_n_short_list(1, 10)])
+
+    f_spec = FileQuerySpec(
+        predicate=lambda x: x.experience_years >= 5 and x.last_name.startswith("Ив"),
+        key=lambda x: (x.last_name, x.first_name),
+        reverse=False
+    )
+    print("количество (Ив*, стаж>=5):", fj.get_count(f_spec))
+    print("пагинация (Ив*, стаж>=5):", [p.to_short_string() for p in fj.get_k_n_short_list(1, 10, f_spec)])
+
+    print("=== YAML (adapter + file decorator) ===")
+    y = YamlRepoAdapter("instructors.yaml")
+    clear_repo(y)
+    y.add(Instructor(30, "Смирнов", "Лев", None, "+79000000030", 2))
+    y.add(Instructor(31, "Абрамов", "Илья", None, "+79000000031", 6))
+    y.add(Instructor(32, "Баранова", "Вера", None, "+79000000032", 8))
+
+    fy = FileFilterSortDecorator(y)
+
+    f_spec2 = FileQuerySpec(
+        predicate=lambda x: x.last_name.startswith(("А", "Б")),
+        key=lambda x: x.experience_years,
+        reverse=True
+    )
+    print("количество (фамилии А/Б):", fy.get_count(f_spec2))
+    print("пагинация (фамилии А/Б, стаж DESC):", [p.to_short_string() for p in fy.get_k_n_short_list(1, 10, f_spec2)])
+
+
 if __name__ == "__main__":
     smoke(JsonRepoAdapter("instructors.json"), "JSON (adapter)")
     smoke(YamlRepoAdapter("instructors.yaml"), "YAML (adapter)")
     smoke(DbRepoAdapter(host="localhost", port=5432, dbname="postgres", user="postgres", password="1234"),
           "DB (adapter)")
     smoke_db_with_decorator()
+    smoke_files_with_decorator()
