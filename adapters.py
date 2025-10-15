@@ -1,13 +1,13 @@
 from __future__ import annotations
-from typing import List
-from Instructor import Instructor
-from PublicInstructorProfile import PublicInstructorProfile
-from instructor_repo_iface import InstructorRepo
 
+from db_singleton import PostgresDB
+from Instructor import Instructor
+from Instructor_rep_db import InstructorRepDB
 from Instructor_rep_json import InstructorRepJson
 from Instructor_rep_yaml import InstructorRepYaml
-from Instructor_rep_db import InstructorRepDB
-from db_singleton import PostgresDB 
+from instructor_repo_iface import InstructorRepo
+from PublicInstructorProfile import PublicInstructorProfile
+
 
 class JsonRepoAdapter(InstructorRepo):
     def __init__(self, path: str):
@@ -16,7 +16,7 @@ class JsonRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:
@@ -39,7 +39,7 @@ class YamlRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:
@@ -63,7 +63,7 @@ class DbRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:

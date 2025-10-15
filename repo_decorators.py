@@ -1,11 +1,14 @@
 from __future__ import annotations
-from typing import List
-from spec import QuerySpec
+
+from typing import Any, cast
+
 from Instructor import Instructor
 from PublicInstructorProfile import PublicInstructorProfile
+from spec import QuerySpec
+
 
 class DbFilterSortDecorator:
-    # белый список разрешённых полей сортировки 
+    # белый список разрешённых полей сортировки
     _ALLOWED_ORDER_FIELDS = {
         "last_name": "last_name",
         "first_name": "first_name",
@@ -16,25 +19,26 @@ class DbFilterSortDecorator:
     }
     _ORDER_DEFAULT = "ORDER BY last_name, first_name, patronymic NULLS LAST, instructor_id"
 
-    def __init__(self, db_repo):
-        # то что мы оборачиваем в декоратор 
-        self._repo = db_repo          
-        self._db = db_repo._adaptee.db if hasattr(db_repo, "_adaptee") else db_repo.db
+    def __init__(self, db_repo: Any) -> None:
+        self._repo: Any = db_repo
+        self._db: Any = db_repo._adaptee.db if hasattr(db_repo, "_adaptee") else db_repo.db
 
     # просто вызываем оригинальные методы
     def get_by_id(self, instructor_id: int) -> Instructor | None:
-        return self._repo.get_by_id(instructor_id)
+        return cast(Instructor | None, self._repo.get_by_id(instructor_id))
 
     def add(self, item: Instructor) -> Instructor | None:
-        return self._repo.add(item)
+        return cast(Instructor | None, self._repo.add(item))
 
     def replace_by_id(self, instructor_id: int, new_item: Instructor) -> bool:
-        return self._repo.replace_by_id(instructor_id, new_item)
+        return cast(bool, self._repo.replace_by_id(instructor_id, new_item))
 
     def delete_by_id(self, instructor_id: int) -> bool:
-        return self._repo.delete_by_id(instructor_id)
+        return cast(bool, self._repo.delete_by_id(instructor_id))
 
-    def get_k_n_short_list(self, k: int, n: int, spec: QuerySpec | None = None) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: QuerySpec | None = None
+    ) -> list[PublicInstructorProfile]:
         if k <= 0 or n <= 0:
             return []
         spec = spec or QuerySpec()

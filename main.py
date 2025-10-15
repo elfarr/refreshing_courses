@@ -1,7 +1,11 @@
-from Instructor import Instructor
-from PublicInstructorProfile import PublicInstructorProfile 
+from collections.abc import Callable
+from typing import Any
 
-def run_case(title: str, fn, should_fail: bool = False) -> None:
+from Instructor import Instructor
+from PublicInstructorProfile import PublicInstructorProfile
+
+
+def run_case(title: str, fn: Callable[[], object], should_fail: bool = False) -> None:
     try:
         obj = fn()
         if should_fail:
@@ -18,62 +22,64 @@ def run_case(title: str, fn, should_fail: bool = False) -> None:
             print(f"\n[FAIL] {title} -> не ожидал ошибку: {e}")
 
 
-def make(*args, **kwargs):
+def make(*args: Any, **kwargs: Any) -> Callable[[], Instructor]:
     return lambda: Instructor(*args, **kwargs)
 
 
 if __name__ == "__main__":
-
     cases = [
-        ("Создание корректного Instructor",
-         make(1, "Иванов", "Иван", "Иванович", "+79001234567", 5), False),
-
-        ("Отрицательный instructor_id",
-         make(-1, "Иванов", "Иван", None, "+79991112233", 3), True),
-
-        ("Пустая фамилия",
-         make(1, "   ", "Иван", None, "+79991112233", 3), True),
-
-        ("Пустое имя",
-         make(1, "Иванов", "   ", None, "+79991112233", 3), True),
-
-        ("Пустая строка как отчество (нужно None)",
-            make(1, "Иванов", "Иван", "   ", "+79991112233", 3), True),
-
-        ("Короткий телефон",
-         make(1, "Иванов", "Иван", None, "123", 3), True),
-
-        ("Телефон с недопустимыми символами",
-         make(1, "Иванов", "Иван", None, "+79991112233ext5", 3), True),
-
-        ("Опыт отрицательный",
-         make(1, "Иванов", "Иван", None, "+79991112233", -2), True),
-
-        ("Опыт > 80 лет",
-         make(1, "Иванов", "Иван", None, "+79991112233", 120), True),
-
-        ("from_string OK",
-         (lambda: Instructor("2;Петров;Пётр;;+79011112233;3")), False),
-
-        ("from_string BAD (мало полей)",
-         (lambda: Instructor("2;Петров;Пётр")), True),
-
-        ("from_json OK (базовые ключи)",
-         (lambda: Instructor('{"instructor_id":3,"last_name":"Сидоров","first_name":"Сидор","patronymic":null,"phone":"+79023334455","experience_years":10}')), False),
-
-        ("from_json OK (синонимы id/exp)",
-         (lambda: Instructor('{"id":4,"last_name":"Кузнецов","first_name":"Денис","phone":"+79035556677","exp":1}')), False),
-
-        ("from_json BAD (битый json)",
-         (lambda: Instructor('{"id": "не число"')), True),
-
-        ("from_dict BAD (нет last_name)",
-         (lambda: Instructor({"id": 6, "first_name": "Юрий", "phone": "+79050000000", "exp": 2})), True),
-
-        ("demo test",
-         (lambda: Instructor("2;Петров;Пётр;;+7901111@@@2233;3")), True),
-
-
+        (
+            "Создание корректного Instructor",
+            make(1, "Иванов", "Иван", "Иванович", "+79001234567", 5),
+            False,
+        ),
+        ("Отрицательный instructor_id", make(-1, "Иванов", "Иван", None, "+79991112233", 3), True),
+        ("Пустая фамилия", make(1, "   ", "Иван", None, "+79991112233", 3), True),
+        ("Пустое имя", make(1, "Иванов", "   ", None, "+79991112233", 3), True),
+        (
+            "Пустая строка как отчество (нужно None)",
+            make(1, "Иванов", "Иван", "   ", "+79991112233", 3),
+            True,
+        ),
+        ("Короткий телефон", make(1, "Иванов", "Иван", None, "123", 3), True),
+        (
+            "Телефон с недопустимыми символами",
+            make(1, "Иванов", "Иван", None, "+79991112233ext5", 3),
+            True,
+        ),
+        ("Опыт отрицательный", make(1, "Иванов", "Иван", None, "+79991112233", -2), True),
+        ("Опыт > 80 лет", make(1, "Иванов", "Иван", None, "+79991112233", 120), True),
+        ("from_string OK", (lambda: Instructor("2;Петров;Пётр;;+79011112233;3")), False),
+        ("from_string BAD (мало полей)", (lambda: Instructor("2;Петров;Пётр")), True),
+        (
+            "from_json OK (базовые ключи)",
+            (
+                lambda: Instructor(
+                    '{"instructor_id":3,"last_name":"Сидоров","first_name":"Сидор","patronymic":null,"phone":"+79023334455","experience_years":10}'
+                )
+            ),
+            False,
+        ),
+        (
+            "from_json OK (синонимы id/exp)",
+            (
+                lambda: Instructor(
+                    '{"id":4,"last_name":"Кузнецов","first_name":"Денис","phone":"+79035556677","exp":1}'
+                )
+            ),
+            False,
+        ),
+        ("from_json BAD (битый json)", (lambda: Instructor('{"id": "не число"')), True),
+        (
+            "from_dict BAD (нет last_name)",
+            (
+                lambda: Instructor(
+                    {"id": 6, "first_name": "Юрий", "phone": "+79050000000", "exp": 2}
+                )
+            ),
+            True,
+        ),
+        ("demo test", (lambda: Instructor("2;Петров;Пётр;;+7901111@@@2233;3")), True),
     ]
 
     for title, fn, should_fail in cases:
@@ -98,15 +104,16 @@ if __name__ == "__main__":
     print("\nПубличный профиль (короткая версия):")
     pub_a = PublicInstructorProfile(a)
     pub_b = PublicInstructorProfile(b, contact_override="+79111111111")
-    pub_c = PublicInstructorProfile({
-    "id": 1000,
-    "last_name": "Иванов",
-    "first_name": "Иван",
-    "patronymic": "Иванович",
-    "phone": "+79000000000",
-    "exp": 6
-    })
-
+    pub_c = PublicInstructorProfile(
+        {
+            "id": 1000,
+            "last_name": "Иванов",
+            "first_name": "Иван",
+            "patronymic": "Иванович",
+            "phone": "+79000000000",
+            "exp": 6,
+        }
+    )
 
     print("pub_a full:  ", pub_a)
     print("pub_a short: ", pub_a.to_short_string())

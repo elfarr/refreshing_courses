@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import List, Optional
 import os
+from typing import cast
 
 from Instructor import Instructor
 from PublicInstructorProfile import PublicInstructorProfile
+
 
 class InstructorRepBase(ABC):
     def __init__(self, path: str):
@@ -15,12 +16,10 @@ class InstructorRepBase(ABC):
     ## методы будут реализованы в наследниках
     # сами пути к файлам скрыты в методах репозиториев и не подаются снаружи
     @abstractmethod
-    def _load_raw(self) -> List[dict]:
-        ...
+    def _load_raw(self) -> list[dict]: ...
 
     @abstractmethod
-    def _save_raw(self, data: List[dict]) -> None:
-        ...
+    def _save_raw(self, data: list[dict]) -> None: ...
 
     # из инструктора в словарь - нужно для других методов
     def _to_dict(self, ins: Instructor) -> dict:
@@ -34,24 +33,25 @@ class InstructorRepBase(ABC):
         }
 
     ## из файла делаем список объектов
-    def read_all(self) -> List[Instructor]:
+    def read_all(self) -> list[Instructor]:
         rows = self._load_raw()
         return [Instructor(r) for r in rows]
 
     ## в файл записываем список объектов
-    def write_all(self, items: List[Instructor]) -> None:
+    def write_all(self, items: list[Instructor]) -> None:
         self._save_raw([self._to_dict(x) for x in items])
 
     ## из полученного списка словарей получаем по id
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         rows = self._load_raw()
         for r in rows:
-            if int(r.get("instructor_id")) == instructor_id:
+            iid = cast(int | str, r.get("instructor_id"))  # 👈 подсказали тип
+            if iid is not None and int(iid) == instructor_id:
                 return Instructor(r)
         return None
 
     # возвращаем публичные профили
-    def get_k_n_short_list(self, k: int, n: int) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
         if k <= 0 or n <= 0:
             return []
         items = self.read_all()
@@ -60,7 +60,7 @@ class InstructorRepBase(ABC):
         return [PublicInstructorProfile(i) for i in items[start:end]]
 
     # сортируем по фамилии/имени/отчеству
-    def sort_by_last_name(self, reverse: bool = False) -> List[Instructor]:
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
         items = self.read_all()
         items.sort(
             key=lambda x: (
@@ -76,7 +76,10 @@ class InstructorRepBase(ABC):
     # автогенерация id
     def add(self, item: Instructor) -> Instructor:
         rows = self._load_raw()
-        max_id = max((int(r.get("instructor_id", 0)) for r in rows), default=0)
+        max_id = max(
+            (int(cast(int | str, r.get("instructor_id", 0))) for r in rows),  # 👈 cast + дефолт
+            default=0,
+        )
         new_id = max_id + 1
         obj = Instructor(
             new_id,
@@ -93,7 +96,8 @@ class InstructorRepBase(ABC):
     def replace_by_id(self, instructor_id: int, new_item: Instructor) -> bool:
         rows = self._load_raw()
         for idx, r in enumerate(rows):
-            if int(r.get("instructor_id")) == instructor_id:
+            iid = cast(int | str, r.get("instructor_id"))
+            if iid is not None and int(iid) == instructor_id:
                 obj = Instructor(
                     instructor_id,
                     new_item.last_name,
@@ -109,7 +113,11 @@ class InstructorRepBase(ABC):
 
     def delete_by_id(self, instructor_id: int) -> bool:
         rows = self._load_raw()
-        new_rows = [r for r in rows if int(r.get("instructor_id")) != instructor_id]
+        new_rows = [
+            r
+            for r in rows
+            if int(cast(int | str, r.get("instructor_id", -1))) != instructor_id  # 👈 cast + дефолт
+        ]
         deleted = len(new_rows) != len(rows)
         if deleted:
             self._save_raw(new_rows)

@@ -1,9 +1,12 @@
 from __future__ import annotations
-from typing import List
-from instructor_repo_iface import InstructorRepo
-from Instructor import Instructor
-from PublicInstructorProfile import PublicInstructorProfile
+
+from typing import Any, cast
+
 from file_spec import FileQuerySpec
+from Instructor import Instructor
+from instructor_repo_iface import InstructorRepo
+from PublicInstructorProfile import PublicInstructorProfile
+
 
 class FileFilterSortDecorator(InstructorRepo):
     def __init__(self, base_repo: InstructorRepo):
@@ -22,11 +25,11 @@ class FileFilterSortDecorator(InstructorRepo):
     def delete_by_id(self, instructor_id: int) -> bool:
         return self._repo.delete_by_id(instructor_id)
 
-    def _read_all(self) -> List:
+    def _read_all(self) -> list:
         if hasattr(self._repo, "read_all") and callable(self._repo.read_all):
-            return self._repo.read_all()
+            return cast(list[Any], self._repo.read_all())
         # через пагинацию достаем если нет метода
-        items: List = []
+        items: list[Any] = []
         if hasattr(self._repo, "get_k_n_short_list") and callable(self._repo.get_k_n_short_list):
             k, n = 1, 1000  # достаточно крупный батч
             while True:
@@ -37,7 +40,7 @@ class FileFilterSortDecorator(InstructorRepo):
                 k += 1
         return items
 
-    def _to_public(self, x):
+    def _to_public(self, x: Any) -> PublicInstructorProfile:
         return x if isinstance(x, PublicInstructorProfile) else PublicInstructorProfile(x)
 
     def get_count(self, spec: FileQuerySpec | None = None) -> int:
@@ -46,7 +49,9 @@ class FileFilterSortDecorator(InstructorRepo):
             items = [x for x in items if spec.predicate(x)]
         return len(items)
 
-    def get_k_n_short_list(self, k: int, n: int, spec: FileQuerySpec | None = None) -> List[PublicInstructorProfile]:
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: FileQuerySpec | None = None
+    ) -> list[PublicInstructorProfile]:
         if k <= 0 or n <= 0:
             return []
         items = self._read_all()
@@ -58,9 +63,9 @@ class FileFilterSortDecorator(InstructorRepo):
         else:
             items = sorted(
                 items,
-                key=lambda x: (x.last_name, x.first_name, (x.patronymic or ""), x.instructor_id)
+                key=lambda x: (x.last_name, x.first_name, (x.patronymic or ""), x.instructor_id),
             )
 
         start = (k - 1) * n
-        page = items[start:start + n]
+        page = items[start : start + n]
         return [self._to_public(i) for i in page]
