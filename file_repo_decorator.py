@@ -69,3 +69,8 @@ class FileFilterSortDecorator(InstructorRepo):
         start = (k - 1) * n
         page = items[start : start + n]
         return [self._to_public(i) for i in page]
+
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        # если базовый репозиторий умеет сам — делегируем
+        base_sort = getattr(self._repo, "sort_by_last_name", None)
+        return cast(list[Instructor], base_sort(reverse=reverse))  # type: ignore[misc]

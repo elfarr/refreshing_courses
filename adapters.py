@@ -31,6 +31,9 @@ class JsonRepoAdapter(InstructorRepo):
     def get_count(self) -> int:
         return self._adaptee.get_count()
 
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        return self._adaptee.sort_by_last_name(reverse=reverse)
+
 
 class YamlRepoAdapter(InstructorRepo):
     def __init__(self, path: str):
@@ -53,6 +56,9 @@ class YamlRepoAdapter(InstructorRepo):
 
     def get_count(self) -> int:
         return self._adaptee.get_count()
+
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        return self._adaptee.sort_by_last_name(reverse=reverse)
 
 
 class DbRepoAdapter(InstructorRepo):
@@ -77,3 +83,6 @@ class DbRepoAdapter(InstructorRepo):
 
     def get_count(self) -> int:
         return self._adaptee.get_count()
+
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        return self._adaptee.sort_by_last_name(reverse=reverse)

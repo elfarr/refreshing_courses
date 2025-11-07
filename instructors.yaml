@@ -16,3 +16,9 @@
   patronymic: null
   phone: '+79000000032'
   experience_years: 8
+- instructor_id: 4
+  last_name: Иванов
+  first_name: Олег
+  patronymic: null
+  phone: '+79000000033'
+  experience_years: 5

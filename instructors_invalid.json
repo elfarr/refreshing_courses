@@ -1,42 +1,49 @@
 [
   {
-    "instructor_id": 1,
+    "instructor_id": -1,
     "last_name": "Иванов",
     "first_name": "Иван",
     "patronymic": "Иванович",
-    "phone": "+79000000020",
+    "phone": "+79000000000",
     "experience_years": 5
   },
   {
     "instructor_id": 2,
-    "last_name": "Петров",
+    "last_name": "Петров1",
     "first_name": "Пётр",
     "patronymic": null,
-    "phone": "+79000000021",
+    "phone": "+7 900 000 00 01",
     "experience_years": 3
   },
   {
     "instructor_id": 3,
     "last_name": "Сидорова",
     "first_name": "Анна",
-    "patronymic": null,
-    "phone": "+79000000022",
+    "patronymic": "",
+    "phone": "+7(900)000-0002",
     "experience_years": 7
   },
   {
     "instructor_id": 4,
-    "last_name": "Иванова",
-    "first_name": "Алёна",
+    "last_name": "Смирнов",
+    "first_name": "Лев",
     "patronymic": null,
-    "phone": "+79000000023",
-    "experience_years": 9
+    "phone": "abc",
+    "experience_years": 2
   },
   {
     "instructor_id": 5,
+    "last_name": "Иванова",
+    "first_name": "Алёна",
+    "patronymic": null,
+    "phone": "+79000000005",
+    "experience_years": 120
+  },
+  {
+    "id": 6,
     "last_name": "Абрамов",
     "first_name": "Илья",
-    "patronymic": null,
-    "phone": "+79000000024",
-    "experience_years": 6
+    "phone": "+79000000006",
+    "exp": 6
   }
 ]

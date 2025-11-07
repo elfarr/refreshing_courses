@@ -28,11 +28,24 @@ class InstructorRepDB:
         sql = """
         SELECT instructor_id, last_name, first_name, patronymic, phone, experience_years
         FROM instructors
-        ORDER BY last_name, first_name, patronymic NULLS LAST, instructor_id
+        ORDER BY last_name ASC, first_name ASC, patronymic ASC NULLS LAST, instructor_id ASC
         LIMIT %s OFFSET %s
         """
         rows = self.db.fetchall(sql, (n, offset))
         return [PublicInstructorProfile(r) for r in rows]
+
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        direction = "DESC" if reverse else "ASC"
+        sql = f"""
+        SELECT instructor_id, last_name, first_name, patronymic, phone, experience_years
+        FROM instructors
+        ORDER BY last_name {direction},
+                 first_name {direction},
+                 patronymic {direction} NULLS LAST,
+                 instructor_id {direction}
+        """
+        rows = self.db.fetchall(sql)
+        return [Instructor(r) for r in rows]
 
     def add(self, item: Instructor) -> Instructor:
         if not isinstance(item.instructor_id, int) or item.instructor_id <= 0:

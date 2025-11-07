@@ -45,7 +45,7 @@ class InstructorRepBase(ABC):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         rows = self._load_raw()
         for r in rows:
-            iid = cast(int | str, r.get("instructor_id"))  # 👈 подсказали тип
+            iid = cast(int | str, r.get("instructor_id"))
             if iid is not None and int(iid) == instructor_id:
                 return Instructor(r)
         return None
@@ -77,7 +77,7 @@ class InstructorRepBase(ABC):
     def add(self, item: Instructor) -> Instructor:
         rows = self._load_raw()
         max_id = max(
-            (int(cast(int | str, r.get("instructor_id", 0))) for r in rows),  # 👈 cast + дефолт
+            (int(cast(int | str, r.get("instructor_id", 0))) for r in rows),
             default=0,
         )
         new_id = max_id + 1
@@ -114,9 +114,7 @@ class InstructorRepBase(ABC):
     def delete_by_id(self, instructor_id: int) -> bool:
         rows = self._load_raw()
         new_rows = [
-            r
-            for r in rows
-            if int(cast(int | str, r.get("instructor_id", -1))) != instructor_id  # 👈 cast + дефолт
+            r for r in rows if int(cast(int | str, r.get("instructor_id", -1))) != instructor_id
         ]
         deleted = len(new_rows) != len(rows)
         if deleted:

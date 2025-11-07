@@ -48,7 +48,6 @@ class PostgresDB:
         with self.cursor() as cur:
             cur.execute(sql, params or ())
             row: Any = cur.fetchone()
-            # cur.fetchone() может вернуть None либо dict-like
             return dict(row) if row else None
 
     def fetchall(self, sql: str, params: tuple[Any, ...] | None = None) -> list[dict[str, Any]]:
