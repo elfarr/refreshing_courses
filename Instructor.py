@@ -1,38 +1,52 @@
 import json
 import re
+from typing import Any, cast
+
 
 class Instructor:
-    def __init__(self, 
-                 instructor_id: int | str | dict,
-                 last_name: str | None = None,
-                 first_name: str | None = None,
-                 patronymic: str | None = None,
-                 phone: str | None = None,
-                 experience_years: int | None = None):
+    def __init__(
+        self,
+        instructor_id: int | str | dict,
+        last_name: str | None = None,
+        first_name: str | None = None,
+        patronymic: str | None = None,
+        phone: str | None = None,
+        experience_years: int | None = None,
+    ):
         if isinstance(instructor_id, dict):
             d = instructor_id
-            self.instructor_id = d.get("instructor_id") or d.get("id")
-            self.last_name = d.get("last_name")
-            self.first_name = d.get("first_name")
-            self.patronymic = d.get("patronymic")
-            self.phone = d.get("phone")
-            self.experience_years = d.get("experience_years") or d.get("exp")
+            self.instructor_id = cast(int, d.get("instructor_id") or d.get("id"))
+            self.last_name = cast(str, d.get("last_name"))
+            self.first_name = cast(str, d.get("first_name"))
+            self.patronymic = cast(str | None, d.get("patronymic"))
+            self.phone = cast(str, d.get("phone"))
+            self.experience_years = cast(int, d.get("experience_years") or d.get("exp"))
             return
 
         if isinstance(instructor_id, str) and last_name is None:
             s = instructor_id.strip()
             if s.startswith("{"):
                 d = json.loads(s)
-                self.__init__(d)
+                self.__init__(d)  # type: ignore[misc]
                 return
             parts = [p.strip() for p in s.split(";")]
             if len(parts) != 6:
-                raise ValueError("Строка должна содержать 6 полей: id;last;first;patronymic;phone;exp")
+                raise ValueError(
+                    "Строка должна содержать 6 полей: id;last;first;patronymic;phone;exp"
+                )
             pid, last, first, patr, phone, exp = parts
-            self.__init__(int(pid), last, first, None if patr == "" else patr, phone, int(exp))
+            self.__init__(  # type: ignore[misc]
+                int(pid), last, first, None if patr == "" else patr, phone, int(exp)
+            )
             return
 
-        self.instructor_id = instructor_id
+        if isinstance(instructor_id, str):
+            instructor_id = int(instructor_id)
+
+        if last_name is None or first_name is None or phone is None or experience_years is None:
+            raise TypeError("last_name/first_name/phone/experience_years не могут быть None")
+
+        self.instructor_id = instructor_id  # здесь уже int
         self.last_name = last_name
         self.first_name = first_name
         self.patronymic = patronymic
@@ -64,9 +78,13 @@ class Instructor:
             raise ValueError("patronymic должен быть строкой или None")
         v = value.strip()
         if v == "":
-            raise ValueError("patronymic не может быть пустой строкой; используйте None, если отчества нет")
+            raise ValueError(
+                "patronymic не может быть пустой строкой; используйте None, если отчества нет"
+            )
         if not re.fullmatch(r"[A-Za-zА-Яа-яЁё\-'\s]+", v):
-            raise ValueError("patronymic должен содержать только буквы, пробелы, апостроф или дефис")
+            raise ValueError(
+                "patronymic должен содержать только буквы, пробелы, апостроф или дефис"
+            )
         return v
 
     @staticmethod
@@ -75,12 +93,16 @@ class Instructor:
             raise ValueError("phone должен быть строкой")
         v = value.strip()
         if not re.fullmatch(r"[0-9+\-\s()]+", v):
-            raise ValueError("phone содержит недопустимые символы (разрешены цифры, пробелы, + - ( ))")
+            raise ValueError(
+                "phone содержит недопустимые символы (разрешены цифры, пробелы, + - ( ))"
+            )
         if v.count("+") > 1 or ("+" in v and not v.startswith("+")):
             raise ValueError("phone содержит недопустимый символ '+'")
         digits = re.sub(r"\D", "", v)
         if not (7 <= len(digits) <= 15):
-            raise ValueError("phone должен соответствовать формату международного номера (E.164: 7–15 цифр)")
+            raise ValueError(
+                "phone должен соответствовать формату международного номера (E.164: 7–15 цифр)"
+            )
         return v
 
     @staticmethod
@@ -92,7 +114,7 @@ class Instructor:
     @property
     def instructor_id(self) -> int:
         return self.__instructor_id
-    
+
     @instructor_id.setter
     def instructor_id(self, value: int) -> None:
         self.__instructor_id = Instructor.validate_instructor_id(value)
@@ -104,7 +126,7 @@ class Instructor:
     @last_name.setter
     def last_name(self, value: str) -> None:
         self.__last_name = Instructor.validate_name(value, "last_name")
-    
+
     @property
     def first_name(self) -> str:
         return self.__first_name
@@ -153,11 +175,12 @@ class Instructor:
 
     @classmethod
     def from_dict(cls, d: dict) -> "Instructor":
-        def pick(*names, default=None):
+        def pick(*names: str, default: Any = None) -> Any:
             for n in names:
                 if n in d:
                     return d[n]
             return default
+
         return cls(
             instructor_id=pick("instructor_id", "id"),
             last_name=pick("last_name"),
@@ -168,17 +191,20 @@ class Instructor:
         )
 
     def __str__(self) -> str:
-        return (f"Instructor(id={self.instructor_id}, "
-                f"last_name='{self.last_name}', first_name='{self.first_name}', "
-                f"patronymic={repr(self.patronymic)}, phone='{self.phone}', "
-                f"experience_years={self.experience_years})")
+        return (
+            f"Instructor(id={self.instructor_id}, "
+            f"last_name='{self.last_name}', first_name='{self.first_name}', "
+            f"patronymic={repr(self.patronymic)}, phone='{self.phone}', "
+            f"experience_years={self.experience_years})"
+        )
 
     def to_short_string(self) -> str:
         return f"{self.last_name} {self.first_name} {self.patronymic}"
 
-    def __eq__(self, other) -> bool:
-        return (
-            isinstance(other, Instructor)
-            and (self.last_name, self.first_name, self.patronymic, self.experience_years)
-            == (other.last_name, other.first_name, other.patronymic, other.experience_years)
-        )
+    def __eq__(self, other: object) -> bool:  # ← типизировали аргумент
+        return isinstance(other, Instructor) and (
+            self.last_name,
+            self.first_name,
+            self.patronymic,
+            self.experience_years,
+        ) == (other.last_name, other.first_name, other.patronymic, other.experience_years)

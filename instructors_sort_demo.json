@@ -1,0 +1,42 @@
+[
+  {
+    "instructor_id": 3,
+    "last_name": "Смирнов",
+    "first_name": "Лев",
+    "patronymic": null,
+    "phone": "+79000000103",
+    "experience_years": 2
+  },
+  {
+    "instructor_id": 1,
+    "last_name": "Петров",
+    "first_name": "Пётр",
+    "patronymic": null,
+    "phone": "+79000000101",
+    "experience_years": 4
+  },
+  {
+    "instructor_id": 4,
+    "last_name": "Иванова",
+    "first_name": "Алёна",
+    "patronymic": "Алексеевна",
+    "phone": "+79000000104",
+    "experience_years": 9
+  },
+  {
+    "instructor_id": 5,
+    "last_name": "Иванов",
+    "first_name": "Иван",
+    "patronymic": "Иванович",
+    "phone": "+79000000105",
+    "experience_years": 5
+  },
+  {
+    "instructor_id": 2,
+    "last_name": "Абрамов",
+    "first_name": "Илья",
+    "patronymic": null,
+    "phone": "+79000000102",
+    "experience_years": 6
+  }
+]
