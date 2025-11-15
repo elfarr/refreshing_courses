@@ -80,6 +80,13 @@ class InstructorRepBase(ABC):
             (int(cast(int | str, r.get("instructor_id", 0))) for r in rows),
             default=0,
         )
+        duplicate = False
+        for r in rows:
+            if item == Instructor(r):
+                duplicate = True
+                break
+        if duplicate:
+            raise ValueError()
         new_id = max_id + 1
         obj = Instructor(
             new_id,

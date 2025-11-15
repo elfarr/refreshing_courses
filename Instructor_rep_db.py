@@ -96,12 +96,36 @@ class InstructorRepDB:
         )
 
     def replace_by_id(self, instructor_id: int, new_item: Instructor) -> bool:
+        if not isinstance(instructor_id, int) or instructor_id <= 0:
+            raise ValueError("instructor_id должен быть > 0")
+
+        dup_row = self.db.fetchone(
+            """
+            SELECT 1
+            FROM instructors
+            WHERE last_name=%s AND first_name=%s
+            AND COALESCE(patronymic,'') = COALESCE(%s,'')
+            AND experience_years=%s
+            AND instructor_id <> %s
+            LIMIT 1
+            """,
+            (
+                new_item.last_name,
+                new_item.first_name,
+                new_item.patronymic,
+                new_item.experience_years,
+                instructor_id,
+            ),
+        )
+        if dup_row:
+            raise ValueError("такой Instructor уже существует (равенство по ФИО+стаж)")
+
         count = self.db.execute(
             """
             UPDATE instructors
             SET last_name=%s, first_name=%s, patronymic=%s, phone=%s, experience_years=%s
             WHERE instructor_id=%s
-        """,
+            """,
             (
                 new_item.last_name,
                 new_item.first_name,
