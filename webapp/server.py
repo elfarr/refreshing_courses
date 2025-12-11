@@ -12,8 +12,9 @@ from adapters import DbRepoAdapter, JsonRepoAdapter, YamlRepoAdapter
 from instructor_repo_iface import InstructorRepo
 from webapp.add_controller import AddWindowController
 from webapp.controller import InstructorController
+from webapp.edit_controller import EditWindowController
 from webapp.observable_repo import ObservableInstructorRepo
-from webapp.views import render_add_page, render_details_page, render_main_page
+from webapp.views import render_add_page, render_details_page, render_edit_page, render_main_page
 
 
 def _parse_int(value: str | None) -> int | None:
@@ -73,6 +74,7 @@ def _extract_id(path: str) -> int | None:
 def make_handler(
     controller: InstructorController,
     add_controller: AddWindowController,
+    edit_controller: EditWindowController,
 ) -> type[BaseHTTPRequestHandler]:
     class MVCHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
@@ -94,6 +96,16 @@ def make_handler(
                 return
             if parsed.path == "/add":
                 html = render_add_page()
+                self._send_html(html)
+                return
+            if parsed.path == "/edit":
+                params = parse_qs(parsed.query)
+                instructor_id = _parse_int(params.get("id", [None])[0])
+                if instructor_id is None:
+                    _send_text(self, "Некорректный id", HTTPStatus.BAD_REQUEST)
+                    return
+                payload = controller.get_instructor_payload(instructor_id)
+                html = render_edit_page(instructor_id, payload)
                 self._send_html(html)
                 return
             if parsed.path.startswith("/api/instructors"):
@@ -122,6 +134,9 @@ def make_handler(
 
         def do_PUT(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
+            if parsed.path.startswith("/api/edit/"):
+                self._handle_edit_put(parsed.path)
+                return
             instructor_id = _extract_id(parsed.path)
             if instructor_id is None:
                 self.send_error(HTTPStatus.BAD_REQUEST, "ID required")
@@ -218,6 +233,19 @@ def make_handler(
                 return
             _send_json(self, result, HTTPStatus.CREATED)
 
+        def _handle_edit_put(self, path: str) -> None:
+            instructor_id = _extract_id(path)
+            if instructor_id is None:
+                self.send_error(HTTPStatus.BAD_REQUEST, "ID required")
+                return
+            try:
+                payload = _read_json(self)
+                result = edit_controller.update_instructor(instructor_id, payload)
+            except Exception as exc:  # noqa: BLE001
+                _send_text(self, str(exc), HTTPStatus.BAD_REQUEST)
+                return
+            _send_json(self, result)
+
         def _send_html(self, html: str) -> None:
             body = html.encode("utf-8")
             self.send_response(HTTPStatus.OK)
@@ -256,10 +284,11 @@ def build_controller(
 def serve(
     controller: InstructorController,
     add_controller: AddWindowController,
+    edit_controller: EditWindowController,
     host: str = "127.0.0.1",
     port: int = 8080,
 ) -> None:
-    handler = make_handler(controller, add_controller)
+    handler = make_handler(controller, add_controller, edit_controller)
     server = ThreadingHTTPServer((host, port), handler)
     print(f"Веб-сервер запущен: http://{host}:{port}")
     print("Ctrl+C для остановки. Главная страница: /")
@@ -300,7 +329,8 @@ def main() -> None:
         db_params=db_params if args.format == "db" else None,
     )
     add_controller = AddWindowController(controller)
-    serve(controller, add_controller, host=args.host, port=args.port)
+    edit_controller = EditWindowController(controller)
+    serve(controller, add_controller, edit_controller, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

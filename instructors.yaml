@@ -1,5 +1,5 @@
 - instructor_id: 1
-  last_name: Александров
+  last_name: Александро
   first_name: Иван
   patronymic: Иванович
   phone: '+7900000000'
@@ -13,7 +13,7 @@
 - instructor_id: 3
   last_name: Сидорович
   first_name: Анна
-  patronymic: null
+  patronymic: Игоревна
   phone: '+79000000003'
   experience_years: 7
 - instructor_id: 4

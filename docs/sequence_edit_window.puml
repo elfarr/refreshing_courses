@@ -1,0 +1,38 @@
+@startuml
+title Редактирование через новое окно (MVC + Observer + SSE)
+
+actor Пользователь
+participant "Браузер (главное)" as Main
+participant "Браузер (окно редактирования)" as EditWin
+participant "HTTP-сервер\n(/edit, /api/edit/{id}, /events)" as HTTP
+participant EditController
+participant InstructorController as BaseCtrl
+participant "ObservableRepo" as RepoObs
+participant "Хранилище" as Storage
+
+== Открытие окна ==
+Пользователь -> Main: Нажать "Редактировать"
+Main -> HTTP: GET /edit?id=ID
+HTTP --> EditWin: HTML + начальные данные
+
+== Редактирование ==
+Пользователь -> EditWin: Изменить поля, Submit
+EditWin -> HTTP: PUT /api/edit/{ID} (JSON)
+HTTP -> EditController: update_instructor(ID, data)
+EditController -> BaseCtrl: update_instructor(...)
+BaseCtrl -> RepoObs: replace_by_id(ID, Instructor)
+RepoObs -> Storage: переписать запись
+Storage --> RepoObs: ok
+RepoObs -> RepoObs: notify("updated")
+RepoObs --> BaseCtrl: True
+BaseCtrl --> EditController: DTO
+EditController --> HTTP: DTO
+HTTP --> EditWin: 200 OK + JSON
+
+== Обновление главного окна ==
+RepoObs --> HTTP: RepoEvent("updated") (SSE)
+HTTP --> Main: событие -> refresh таблицы/детали
+EditWin -> Main: postMessage(refresh-table)
+EditWin -> EditWin: window.close()
+
+@enduml
