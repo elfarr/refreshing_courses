@@ -88,8 +88,10 @@ class ObservableInstructorRepo(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._base.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
-        return self._base.get_k_n_short_list(k, n)
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: Any | None = None
+    ) -> list[PublicInstructorProfile]:
+        return self._base.get_k_n_short_list(k, n, spec)
 
     # когда мы добавляем объект в репозиторий, еще создается уведомление
     def add(self, item: Instructor) -> Instructor:
@@ -112,8 +114,8 @@ class ObservableInstructorRepo(InstructorRepo):
             self._notify("deleted", None, subject_id=instructor_id)
         return deleted
 
-    def get_count(self) -> int:
-        return self._base.get_count()
+    def get_count(self, spec: Any | None = None) -> int:
+        return self._base.get_count(spec)
 
     def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
         sorted_items = self._base.sort_by_last_name(reverse)

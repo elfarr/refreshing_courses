@@ -6,10 +6,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from queue import Empty
 from typing import Any, cast
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import ParseResult, parse_qs, urlparse
 
 from adapters import DbRepoAdapter, JsonRepoAdapter, YamlRepoAdapter
+from file_repo_decorator import FileFilterSortDecorator
 from instructor_repo_iface import InstructorRepo
+from repo_decorators import DbFilterSortDecorator
 from webapp.add_controller import AddWindowController
 from webapp.controller import InstructorController
 from webapp.edit_controller import EditWindowController
@@ -114,7 +116,7 @@ def make_handler(
                 self._send_html(html)
                 return
             if parsed.path.startswith("/api/instructors"):
-                self._handle_api_get(parsed.path)
+                self._handle_api_get(parsed)
                 return
             if parsed.path == "/events":
                 self._handle_events(parsed.query)
@@ -166,13 +168,14 @@ def make_handler(
                 return
             _send_json(self, {"status": "deleted", "instructor_id": instructor_id})
 
-        def _handle_api_get(self, path: str) -> None:
-            if path == "/api/instructors":
-                items = controller.list_profiles_payload()
-                payload = {"items": items, "count": controller.count()}
+        def _handle_api_get(self, parsed: ParseResult) -> None:
+            if parsed.path == "/api/instructors":
+                filters = self._parse_filters(parsed.query)
+                items = controller.list_profiles_payload(filters=filters)
+                payload = {"items": items, "count": controller.count(filters=filters)}
                 _send_json(self, payload)
                 return
-            instructor_id = _extract_id(path)
+            instructor_id = _extract_id(parsed.path)
             if instructor_id is None:
                 _send_text(self, "Некорректный ID", HTTPStatus.BAD_REQUEST)
                 return
@@ -183,6 +186,26 @@ def make_handler(
                 _send_text(self, "Инструктор не найден", HTTPStatus.NOT_FOUND)
                 return
             _send_json(self, instructor_payload)
+
+        def _parse_filters(self, query: str) -> dict[str, Any]:
+            params = parse_qs(query)
+
+            def _int(name: str) -> int | None:
+                raw_value = params.get(name, [""])[0]
+                if raw_value in ("", None):
+                    return None
+                try:
+                    return int(raw_value)
+                except (TypeError, ValueError):
+                    return None
+
+            return {
+                "last_name": params.get("last_name", [""])[0] or None,
+                "first_name": params.get("first_name", [""])[0] or None,
+                "min_exp": _int("min_exp"),
+                "max_exp": _int("max_exp"),
+                "order_by": params.get("order_by", [""])[0] or None,
+            }
 
         def _handle_events(self, query: str) -> None:
             params = parse_qs(query)
@@ -273,13 +296,13 @@ def build_controller(
 ) -> InstructorController:
     base_repo: InstructorRepo
     if kind == "json":
-        base_repo = JsonRepoAdapter(storage)
+        base_repo = FileFilterSortDecorator(JsonRepoAdapter(storage))
     elif kind == "yaml":
-        base_repo = YamlRepoAdapter(storage)
+        base_repo = FileFilterSortDecorator(YamlRepoAdapter(storage))
     elif kind == "db":
         if not db_params:
             raise ValueError()
-        base_repo = DbRepoAdapter(**db_params)
+        base_repo = DbFilterSortDecorator(DbRepoAdapter(**db_params))
     else:
         raise ValueError()
     observable = ObservableInstructorRepo(base_repo)

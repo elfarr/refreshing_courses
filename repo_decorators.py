@@ -27,8 +27,8 @@ class DbFilterSortDecorator:
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return cast(Instructor | None, self._repo.get_by_id(instructor_id))
 
-    def add(self, item: Instructor) -> Instructor | None:
-        return cast(Instructor | None, self._repo.add(item))
+    def add(self, item: Instructor) -> Instructor:
+        return cast(Instructor, self._repo.add(item))
 
     def replace_by_id(self, instructor_id: int, new_item: Instructor) -> bool:
         return cast(bool, self._repo.replace_by_id(instructor_id, new_item))
@@ -64,6 +64,10 @@ class DbFilterSortDecorator:
             sql += f"WHERE {spec.where}"
         row = self._db.fetchone(sql, tuple(spec.params))
         return int(row["c"]) if row else 0
+
+    def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
+        # delegate to base repo sorting if available
+        return cast(list[Instructor], self._repo.sort_by_last_name(reverse=reverse))
 
     # сборка ORDER BY по белому списку
     def _build_order_sql(self, order_by: str | None) -> str:

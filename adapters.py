@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from db_singleton import PostgresDB
 from Instructor import Instructor
 from Instructor_rep_db import InstructorRepDB
@@ -16,7 +18,9 @@ class JsonRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: Any | None = None
+    ) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:
@@ -28,7 +32,7 @@ class JsonRepoAdapter(InstructorRepo):
     def delete_by_id(self, instructor_id: int) -> bool:
         return self._adaptee.delete_by_id(instructor_id)
 
-    def get_count(self) -> int:
+    def get_count(self, spec: Any | None = None) -> int:
         return self._adaptee.get_count()
 
     def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
@@ -42,7 +46,9 @@ class YamlRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: Any | None = None
+    ) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:
@@ -54,7 +60,7 @@ class YamlRepoAdapter(InstructorRepo):
     def delete_by_id(self, instructor_id: int) -> bool:
         return self._adaptee.delete_by_id(instructor_id)
 
-    def get_count(self) -> int:
+    def get_count(self, spec: Any | None = None) -> int:
         return self._adaptee.get_count()
 
     def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:
@@ -69,7 +75,9 @@ class DbRepoAdapter(InstructorRepo):
     def get_by_id(self, instructor_id: int) -> Instructor | None:
         return self._adaptee.get_by_id(instructor_id)
 
-    def get_k_n_short_list(self, k: int, n: int) -> list[PublicInstructorProfile]:
+    def get_k_n_short_list(
+        self, k: int, n: int, spec: Any | None = None
+    ) -> list[PublicInstructorProfile]:
         return self._adaptee.get_k_n_short_list(k, n)
 
     def add(self, item: Instructor) -> Instructor:
@@ -81,7 +89,7 @@ class DbRepoAdapter(InstructorRepo):
     def delete_by_id(self, instructor_id: int) -> bool:
         return self._adaptee.delete_by_id(instructor_id)
 
-    def get_count(self) -> int:
+    def get_count(self, spec: Any | None = None) -> int:
         return self._adaptee.get_count()
 
     def sort_by_last_name(self, reverse: bool = False) -> list[Instructor]:

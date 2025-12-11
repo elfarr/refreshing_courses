@@ -48,15 +48,29 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
 <body>
   <header>
     <h1>Инструкторы</h1>
-    <p>Короткая карточка = отображаемое имя + контакт. Детали и редактирование — в отдельных окнах.</p>
     <button id="add-window-btn">Добавить в новом окне</button>
   </header>
   <main>
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-        <div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:0.75rem;">
+        <div style="flex:1;">
           <h2 style="margin:0 0 0.25rem 0;">Текущие данные</h2>
-          <p style="margin:0;color:var(--muted);">Двойной клик по строке — открыть детали</p>
+          <p style="margin:0;color:var(--muted);">Двойной клик по строке - открыть детали</p>
+          <form id="filter-form" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <input name="last_name" placeholder="Фамилия содержит" style="flex:1;min-width:140px;padding:0.45rem;border:1px solid var(--border);border-radius:8px;" />
+            <input name="first_name" placeholder="Имя содержит" style="flex:1;min-width:140px;padding:0.45rem;border:1px solid var(--border);border-radius:8px;" />
+            <input name="min_exp" type="number" min="0" max="80" placeholder="Мин. опыт" style="width:120px;padding:0.45rem;border:1px solid var(--border);border-radius:8px;" />
+            <input name="max_exp" type="number" min="0" max="80" placeholder="Макс. опыт" style="width:120px;padding:0.45rem;border:1px solid var(--border);border-radius:8px;" />
+            <select name="order_by" style="width:180px;padding:0.45rem;border:1px solid var(--border);border-radius:8px;">
+              <option value="">Сортировка: по фамилии</option>
+              <option value="last_name asc">Фамилия ↑</option>
+              <option value="last_name desc">Фамилия ↓</option>
+              <option value="experience_years asc">Опыт ↑</option>
+              <option value="experience_years desc">Опыт ↓</option>
+            </select>
+            <button type="submit" class="secondary" style="padding:0.45rem 0.9rem;">Фильтр</button>
+            <button type="button" id="clear-filter" class="secondary" style="padding:0.45rem 0.9rem;background:#9ca3af;">Сброс</button>
+          </form>
         </div>
         <button id="refresh-btn" class="secondary">Обновить таблицу</button>
       </div>
@@ -78,6 +92,8 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
     const tableBody = document.getElementById('instructors-body');
     const refreshBtn = document.getElementById('refresh-btn');
     const addWindowBtn = document.getElementById('add-window-btn');
+    const filterForm = document.getElementById('filter-form');
+    const clearFilterBtn = document.getElementById('clear-filter');
     let cache = {{ data: {{ items: {data_json} }} }};
 
     function renderTable(items) {{
@@ -118,8 +134,21 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
       await refresh();
     }}
 
+    function buildQuery() {{
+      const formData = new FormData(filterForm);
+      const params = new URLSearchParams();
+      for (const [key, value] of formData.entries()) {{
+        const v = value === null ? '' : String(value).trim();
+        if (v !== '') {{
+          params.append(key, v);
+        }}
+      }}
+      const qs = params.toString();
+      return qs ? `?${{qs}}` : '';
+    }}
+
     async function refresh() {{
-      const res = await fetch('/api/instructors');
+      const res = await fetch('/api/instructors' + buildQuery());
       if (!res.ok) return;
       const data = await res.json();
       cache.data = data;
@@ -127,6 +156,14 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
     }}
 
     refreshBtn.addEventListener('click', refresh);
+    filterForm.addEventListener('submit', (e) => {{
+      e.preventDefault();
+      refresh();
+    }});
+    clearFilterBtn.addEventListener('click', () => {{
+      filterForm.reset();
+      refresh();
+    }});
 
     addWindowBtn.addEventListener('click', () => {{
       window.open('/add', 'add_window', 'width=520,height=720');
