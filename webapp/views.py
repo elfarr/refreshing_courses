@@ -10,108 +10,101 @@ def _json(data: Any) -> str:
 
 
 def render_main_page(items: list[dict[str, Any]]) -> str:
-    # данные обо всех инструкторах
     data_json = _json(items)
     return f"""<!doctype html>
-<html lang=\"ru\">
+<html lang="ru">
 <head>
-  <meta charset=\"utf-8\" />
-  <title>Преподаватели — MVC CRUD</title>
+  <meta charset="utf-8" />
+  <title>Инструкторы — MVC CRUD</title>
   <style>
-    body {{ font-family: Arial, sans-serif; margin: 0; background: #f3f4f6; color: #111; }}
-    header {{ background: #1f2937; color: #fff; padding: 1rem 2rem; }}
-    main {{ padding: 1.5rem 2rem; }}
-    table {{ width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; background: #fff; }}
-    th, td {{ padding: 0.5rem 0.75rem; border-bottom: 1px solid #e5e7eb; text-align: left; }}
-    th {{ background: #f9fafb; font-weight: 600; }}
-    tbody tr:hover {{ background: #f3f4f6; }}
-    .actions button {{ margin-right: 0.4rem; }}
-    form {{ background: #fff; padding: 1rem; border-radius: 0.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }}
-    label {{ display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #374151; }}
-    input {{ width: 100%; padding: 0.45rem; margin-top: 0.2rem; border: 1px solid #d1d5db; border-radius: 0.25rem; }}
-    button {{ padding: 0.4rem 0.8rem; border: none; border-radius: 0.25rem; background: #2563eb; color: #fff; cursor: pointer; }}
-    button.secondary {{ background: #6b7280; }}
+    :root {{
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --accent: #2563eb;
+      --accent-2: #111827;
+      --text: #0f172a;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 14px 38px rgba(15,23,42,0.08);
+      --radius: 12px;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{ font-family: "Inter","Segoe UI",system-ui,sans-serif; margin: 0; background: linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%); color: var(--text); }}
+    header {{ background: var(--card); padding: 1.2rem 2rem; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10; }}
+    header h1 {{ margin: 0 0 0.35rem 0; font-size: 1.3rem; }}
+    header p {{ margin: 0; color: var(--muted); }}
+    main {{ padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; }}
+    .card {{ background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1rem; }}
+    table {{ width: 100%; border-collapse: collapse; }}
+    th, td {{ padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }}
+    th {{ background: #f8fafc; font-weight: 600; }}
+    tbody tr:hover {{ background: #f1f5f9; }}
+    .actions button {{ margin-right: 0.35rem; }}
+    button {{ padding: 0.5rem 0.95rem; border: none; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 600; }}
+    button.secondary {{ background: var(--muted); color: #fff; }}
+    #add-window-btn {{ margin-top: 0.5rem; background: var(--accent-2); }}
   </style>
 </head>
 <body>
   <header>
-    <h1>Преподавательский состав курсов повышения квалификации</h1>
-    <p>Кликните “Подробнее” чтобы открыть отдельную вкладку с полной информацией и live-обновлениями.</p>
+    <h1>Инструкторы</h1>
+    <p>Короткая карточка показывает отображаемое имя и контакт. Детали — по двойному клику или кнопке.</p>
+    <button id="add-window-btn">Добавить в новом окне</button>
   </header>
   <main>
-    <section>
-      <div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;\">
-        <h2 style=\"margin:0\">Текущие данные</h2>
-        <button id=\"refresh-btn\" class=\"secondary\">Обновить таблицу</button>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+        <div>
+          <h2 style="margin:0 0 0.25rem 0;">Текущие данные</h2>
+          <p style="margin:0;color:var(--muted);">Двойной клик по строке — открыть детали</p>
+        </div>
+        <button id="refresh-btn" class="secondary">Обновить таблицу</button>
       </div>
       <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Фамилия</th>
-            <th>Имя</th>
+            <th>Отображаемое имя</th>
             <th>Опыт</th>
-            <th>Контакты</th>
+            <th>Контакт</th>
             <th>Действия</th>
           </tr>
         </thead>
-        <tbody id=\"instructors-body\"></tbody>
+        <tbody id="instructors-body"></tbody>
       </table>
-    </section>
-    <section>
-      <h2>Форма создания / редактирования</h2>
-      <form id=\"instructor-form\" data-mode=\"create\">
-        <input type=\"hidden\" name=\"instructor_id\" />
-        <label>Фамилия<input required name=\"last_name\" /></label>
-        <label>Имя<input required name=\"first_name\" /></label>
-        <label>Отчество<input name=\"patronymic\" /></label>
-        <label>Телефон<input required name=\"phone\" /></label>
-        <label>Опыт, лет<input required type=\"number\" min=\"0\" max=\"80\" name=\"experience_years\" /></label>
-        <div style=\"margin-top:0.75rem;\">
-          <button type=\"submit\">Сохранить</button>
-          <button type=\"button\" id=\"reset-btn\" class=\"secondary\">Очистить форму</button>
-        </div>
-      </form>
-    </section>
+    </div>
   </main>
   <script>
     const tableBody = document.getElementById('instructors-body');
     const refreshBtn = document.getElementById('refresh-btn');
-    const form = document.getElementById('instructor-form');
-    const resetBtn = document.getElementById('reset-btn');
+    const addWindowBtn = document.getElementById('add-window-btn');
     let cache = {{ data: {{ items: {data_json} }} }};
 
     function renderTable(items) {{
       const rows = items.map(item => `
         <tr>
           <td>${{item.instructor_id}}</td>
-          <td>${{item.last_name}}</td>
-          <td>${{item.first_name}}</td>
-          <td>${{item.experience_years}}</td>
+          <td>${{item.display_name || item.last_name || ''}}</td>
+          <td>${{item.experience_years}} лет</td>
           <td>${{item.contact}}</td>
-          <td class=\"actions\">
-            <button type=\"button\" onclick=\"openDetails(${{item.instructor_id}})\">Подробнее</button>
-            <button type=\"button\" onclick=\"fillForm(${{item.instructor_id}})\">Редактировать</button>
-            <button type=\"button\" onclick=\"deleteInstructor(${{item.instructor_id}})\">Удалить</button>
+          <td class="actions">
+            <button type="button" onclick="openDetails(${{item.instructor_id}})">Подробнее</button>
+            <button type="button" onclick="deleteInstructor(${{item.instructor_id}})">Удалить</button>
           </td>
         </tr>`).join('');
-      tableBody.innerHTML = rows || '<tr><td colspan=\"6\">Нет данных</td></tr>';
+      tableBody.innerHTML = rows || '<tr><td colspan="5">Нет данных</td></tr>';
     }}
+
+    tableBody.addEventListener('dblclick', (e) => {{
+      const row = e.target.closest('tr');
+      if (!row) return;
+      const idCell = row.querySelector('td');
+      const id = Number(idCell?.textContent);
+      if (id) openDetails(id);
+    }});
 
     function openDetails(id) {{
       window.open(`/details?id=${{id}}`, '_blank');
-    }}
-
-    function fillForm(id) {{
-      const item = cache.data.items.find(x => x.instructor_id === id);
-      if (!item) return;
-      form.dataset.mode = 'edit';
-      form.instructor_id.value = item.instructor_id;
-      form.last_name.value = item.last_name;
-      form.first_name.value = item.first_name;
-      form.patronymic.value = item.patronymic || '';
-      form.phone.value = item.phone;
-      form.experience_years.value = item.experience_years;
     }}
 
     async function deleteInstructor(id) {{
@@ -128,35 +121,17 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
       renderTable(data.items);
     }}
 
-    form.addEventListener('submit', async (event) => {{
-      event.preventDefault();
-      const payload = Object.fromEntries(new FormData(form).entries());
-      payload.experience_years = Number(payload.experience_years);
-      const mode = form.dataset.mode;
-      const targetId = payload.instructor_id;
-      const url = mode === 'edit' && targetId ? `/api/instructors/${{targetId}}` : '/api/instructors';
-      const method = mode === 'edit' ? 'PUT' : 'POST';
-      if (mode !== 'edit') delete payload.instructor_id;
-      const res = await fetch(url, {{
-        method,
-        headers: {{ 'Content-Type': 'application/json' }},
-        body: JSON.stringify(payload)
-      }});
-      if (res.ok) {{
-        form.reset();
-        form.dataset.mode = 'create';
-        await refresh();
-      }} else {{
-        alert('Ошибка: ' + await res.text());
+    refreshBtn.addEventListener('click', refresh);
+
+    addWindowBtn.addEventListener('click', () => {{
+      window.open('/add', 'add_window', 'width=520,height=720');
+    }});
+
+    window.addEventListener('message', (event) => {{
+      if (event.data && event.data.type === 'refresh-table') {{
+        refresh();
       }}
     }});
-
-    resetBtn.addEventListener('click', () => {{
-      form.reset();
-      form.dataset.mode = 'create';
-    }});
-
-    refreshBtn.addEventListener('click', refresh);
 
     renderTable(cache.data.items);
 
@@ -170,13 +145,17 @@ def render_main_page(items: list[dict[str, Any]]) -> str:
 def render_details_page(instructor_id: int, payload: dict[str, Any] | None) -> str:
     payload_json = _json(payload or {})
     return f"""<!doctype html>
-<html lang=\"ru\">
+<html lang="ru">
 <head>
-  <meta charset=\"utf-8\" />
+  <meta charset="utf-8" />
   <title>Инструктор #{escape(str(instructor_id))}</title>
   <style>
-    body {{ font-family: Arial, sans-serif; margin: 2rem; color: #111; }}
-    .card {{ border: 1px solid #e5e7eb; padding: 1rem 1.5rem; border-radius: 0.35rem; max-width: 520px; }}
+    :root {{
+      --border: #e5e7eb;
+      --shadow: 0 14px 38px rgba(15,23,42,0.08);
+    }}
+    body {{ font-family: "Inter","Segoe UI",system-ui,sans-serif; margin: 2rem; color: #0f172a; background: #f8fafc; }}
+    .card {{ border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 12px; max-width: 520px; box-shadow: var(--shadow); background: #fff; }}
     h1 {{ margin-top: 0; }}
     dt {{ font-weight: 600; margin-top: 0.3rem; }}
     dd {{ margin-left: 0; margin-bottom: 0.5rem; }}
@@ -184,13 +163,13 @@ def render_details_page(instructor_id: int, payload: dict[str, Any] | None) -> s
   </style>
 </head>
 <body>
-  <div class=\"card\">
+  <div class="card">
     <h1>Инструктор #{escape(str(instructor_id))}</h1>
-    <p id=\"status\">Live-обновление включено (Observer > SSE)</p>
+    <p id="status">Live-обновление включено (Observer > SSE)</p>
     <dl>
-      <dt>ФИО</dt><dd id=\"fio\"></dd>
-      <dt>Телефон</dt><dd id=\"phone\"></dd>
-      <dt>Опыт</dt><dd id=\"exp\"></dd>
+      <dt>ФИО</dt><dd id="fio"></dd>
+      <dt>Телефон</dt><dd id="phone"></dd>
+      <dt>Опыт</dt><dd id="exp"></dd>
     </dl>
   </div>
   <script>
@@ -223,4 +202,70 @@ def render_details_page(instructor_id: int, payload: dict[str, Any] | None) -> s
 </html>"""
 
 
-__all__ = ["render_main_page", "render_details_page"]
+def render_add_page() -> str:
+    return """<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Добавить инструктора</title>
+  <style>
+    :root {
+      --bg1: #f4f5fb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --accent: linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
+      --muted: #6b7280;
+      --shadow: 0 18px 40px rgba(15,23,42,0.12);
+    }
+    body { font-family: "Inter","Segoe UI",system-ui,sans-serif; margin: 0; color: #0f172a;
+           background: radial-gradient(circle at 20% 20%, #eef2ff, #f8fafc 35%), var(--bg1); }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    form { width: min(520px, 100%); background: var(--card); padding: 1.3rem 1.5rem;
+           border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #eef2ff; }
+    h1 { margin: 0 0 0.75rem 0; font-size: 1.25rem; }
+    p.lead { margin: 0 0 1rem 0; color: var(--muted); }
+    label { display: block; margin-top: 0.65rem; font-size: 0.95rem; color: var(--muted); }
+    input { width: 100%; padding: 0.6rem; margin-top: 0.25rem; border: 1px solid var(--border); border-radius: 10px; }
+    button { width: 100%; padding: 0.65rem 0.9rem; border: none; border-radius: 10px; background: var(--accent);
+             color: #fff; cursor: pointer; margin-top: 1rem; font-weight: 700; letter-spacing: 0.01em; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <form id="add-form">
+      <h1>Новый инструктор</h1>
+      <p class="lead">Заполните поля, данные автоматически появятся на главной странице.</p>
+      <label>Фамилия<input required name="last_name" /></label>
+      <label>Имя<input required name="first_name" /></label>
+      <label>Отчество<input name="patronymic" /></label>
+      <label>Телефон<input required name="phone" /></label>
+      <label>Опыт, лет<input required type="number" min="0" max="80" name="experience_years" /></label>
+      <button type="submit">Сохранить и закрыть</button>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById('add-form');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.experience_years = Number(payload.experience_years);
+      const res = await fetch('/api/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        if (window.opener) {
+          window.opener.postMessage({ type: 'refresh-table' }, '*');
+        }
+        window.close();
+      } else {
+        alert('Ошибка: ' + await res.text());
+      }
+    });
+  </script>
+</body>
+</html>"""
+
+
+__all__ = ["render_main_page", "render_details_page", "render_add_page"]

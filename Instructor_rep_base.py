@@ -35,7 +35,14 @@ class InstructorRepBase(ABC):
     ## из файла делаем список объектов
     def read_all(self) -> list[Instructor]:
         rows = self._load_raw()
-        return [Instructor(r) for r in rows]
+        valid: list[Instructor] = []
+        for r in rows:
+            try:
+                valid.append(Instructor(r))
+            except Exception:
+                # Пропускаем некорректные записи, чтобы не падал весь список
+                continue
+        return valid
 
     ## в файл записываем список объектов
     def write_all(self, items: list[Instructor]) -> None:

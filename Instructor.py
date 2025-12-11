@@ -20,7 +20,11 @@ class Instructor:
             self.first_name = cast(str, d.get("first_name"))
             self.patronymic = cast(str | None, d.get("patronymic"))
             self.phone = cast(str, d.get("phone"))
-            self.experience_years = cast(int, d.get("experience_years") or d.get("exp"))
+            exp_raw = d.get("experience_years") or d.get("exp")
+            if isinstance(exp_raw, str):
+                exp_raw = exp_raw.strip()
+                exp_raw = int(exp_raw) if exp_raw.isdigit() else exp_raw
+            self.experience_years = cast(int, exp_raw)
             return
 
         if isinstance(instructor_id, str) and last_name is None:
