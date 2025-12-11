@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import importlib
 import json
-
-import yaml  # type: ignore[import-untyped]
+from typing import Any, cast
 
 from adapters import DbRepoAdapter, JsonRepoAdapter, YamlRepoAdapter
 from file_repo_decorator import FileFilterSortDecorator
@@ -14,6 +14,8 @@ from instructor_repo_iface import InstructorRepo
 from PublicInstructorProfile import PublicInstructorProfile
 from repo_decorators import DbFilterSortDecorator
 from spec import QuerySpec
+
+yaml = cast(Any, importlib.import_module("yaml"))
 
 
 def pp(title: str, items: list[PublicInstructorProfile]) -> None:

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import importlib
 import os
-from typing import cast
-
-import yaml  # type: ignore[import-untyped]
+from typing import Any, cast
 
 from Instructor_rep_base import InstructorRepBase
+
+yaml = cast(Any, importlib.import_module("yaml"))
 
 
 class InstructorRepYaml(InstructorRepBase):
