@@ -14,7 +14,7 @@ from webapp.add_controller import AddWindowController
 from webapp.controller import InstructorController
 from webapp.edit_controller import EditWindowController
 from webapp.observable_repo import ObservableInstructorRepo
-from webapp.views import render_add_page, render_details_page, render_edit_page, render_main_page
+from webapp.views import render_details_page, render_form_page, render_main_page
 
 
 def _parse_int(value: str | None) -> int | None:
@@ -95,7 +95,8 @@ def make_handler(
                 self._send_html(html)
                 return
             if parsed.path == "/add":
-                html = render_add_page()
+                config = add_controller.form_config()
+                html = render_form_page(config)
                 self._send_html(html)
                 return
             if parsed.path == "/edit":
@@ -104,8 +105,12 @@ def make_handler(
                 if instructor_id is None:
                     _send_text(self, "Некорректный id", HTTPStatus.BAD_REQUEST)
                     return
-                payload = controller.get_instructor_payload(instructor_id)
-                html = render_edit_page(instructor_id, payload)
+                try:
+                    config = edit_controller.form_config(instructor_id)
+                except Exception as exc:  # noqa: BLE001
+                    _send_text(self, str(exc), HTTPStatus.NOT_FOUND)
+                    return
+                html = render_form_page(config)
                 self._send_html(html)
                 return
             if parsed.path.startswith("/api/instructors"):

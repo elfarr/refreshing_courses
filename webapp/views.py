@@ -207,80 +207,29 @@ def render_details_page(instructor_id: int, payload: dict[str, Any] | None) -> s
 </html>"""
 
 
-def render_add_page() -> str:
-    return """<!doctype html>
+class FormWindow:
+    """Единый класс окна (форма add/edit), конфиг передают контроллеры."""
+
+    def __init__(self, config: dict[str, Any]):
+        self.config = config
+
+    def render(self) -> str:
+        config_json = _json(self.config)
+        action = escape(self.config.get("action", "/api/add"))
+        method = escape(self.config.get("method", "POST"))
+        title = escape(self.config.get("title", "Форма"))
+        subtitle = escape(
+            self.config.get(
+                "subtitle",
+                "Заполните поля и отправьте форму. Данные сохранятся и обновят главную таблицу.",
+            )
+        )
+        submit_text = escape(self.config.get("submit_text", "Сохранить"))
+        return f"""<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Добавить инструктора</title>
-  <style>
-    :root {
-      --bg1: #f4f5fb;
-      --card: #ffffff;
-      --border: #e5e7eb;
-      --accent: linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
-      --muted: #6b7280;
-      --shadow: 0 18px 40px rgba(15,23,42,0.12);
-    }
-    body { font-family: "Inter","Segoe UI",system-ui,sans-serif; margin: 0; color: #0f172a;
-           background: radial-gradient(circle at 20% 20%, #eef2ff, #f8fafc 35%), var(--bg1); }
-    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-    form { width: min(520px, 100%); background: var(--card); padding: 1.3rem 1.5rem;
-           border-radius: 16px; box-shadow: var(--shadow); border: 1px solid #eef2ff; }
-    h1 { margin: 0 0 0.75rem 0; font-size: 1.25rem; }
-    p.lead { margin: 0 0 1rem 0; color: var(--muted); }
-    label { display: block; margin-top: 0.65rem; font-size: 0.95rem; color: var(--muted); }
-    input { width: 100%; padding: 0.6rem; margin-top: 0.25rem; border: 1px solid var(--border); border-radius: 10px; }
-    button { width: 100%; padding: 0.65rem 0.9rem; border: none; border-radius: 10px; background: var(--accent);
-             color: #fff; cursor: pointer; margin-top: 1rem; font-weight: 700; letter-spacing: 0.01em; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <form id="add-form">
-      <h1>Новый инструктор</h1>
-      <p class="lead">Заполните поля, данные автоматически появятся на главной странице.</p>
-      <label>Фамилия<input required name="last_name" /></label>
-      <label>Имя<input required name="first_name" /></label>
-      <label>Отчество<input name="patronymic" /></label>
-      <label>Телефон<input required name="phone" /></label>
-      <label>Опыт, лет<input required type="number" min="0" max="80" name="experience_years" /></label>
-      <button type="submit">Сохранить и закрыть</button>
-    </form>
-  </div>
-  <script>
-    const form = document.getElementById('add-form');
-    form.addEventListener('submit', async (event) => {{
-      event.preventDefault();
-      const payload = Object.fromEntries(new FormData(form).entries());
-      payload.experience_years = Number(payload.experience_years);
-      const res = await fetch('/api/add', {{
-        method: 'POST',
-        headers: {{ 'Content-Type': 'application/json' }},
-        body: JSON.stringify(payload)
-      }});
-      if (res.ok) {{
-        if (window.opener) {{
-          window.opener.postMessage({{ type: 'refresh-table' }}, '*');
-        }}
-        window.close();
-      }} else {{
-        alert('Ошибка: ' + await res.text());
-      }}
-    }});
-  </script>
-</body>
-</html>"""
-
-
-def render_edit_page(instructor_id: int, payload: dict[str, Any] | None) -> str:
-    payload = payload or {}
-    payload_json = _json(payload)
-    return f"""<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <title>Редактировать инструктора #{escape(str(instructor_id))}</title>
+  <title>{title}</title>
   <style>
     :root {{
       --bg1: #f4f5fb;
@@ -305,20 +254,21 @@ def render_edit_page(instructor_id: int, payload: dict[str, Any] | None) -> str:
 </head>
 <body>
   <div class="wrap">
-    <form id="edit-form">
-      <h1>Редактирование #{instructor_id}</h1>
-      <p class="lead">Сохраните изменения, и главная страница обновится автоматически.</p>
+    <form id="form-window">
+      <h1>{title}</h1>
+      <p class="lead">{subtitle}</p>
       <label>Фамилия<input required name="last_name" /></label>
       <label>Имя<input required name="first_name" /></label>
       <label>Отчество<input name="patronymic" /></label>
       <label>Телефон<input required name="phone" /></label>
       <label>Опыт, лет<input required type="number" min="0" max="80" name="experience_years" /></label>
-      <button type="submit">Сохранить и закрыть</button>
+      <button type="submit">{submit_text}</button>
     </form>
   </div>
   <script>
-    const payload = {payload_json};
-    const form = document.getElementById('edit-form');
+    const CONFIG = {config_json};
+    const form = document.getElementById('form-window');
+
     function fill(data) {{
       if (!data) return;
       form.last_name.value = data.last_name || '';
@@ -327,14 +277,14 @@ def render_edit_page(instructor_id: int, payload: dict[str, Any] | None) -> str:
       form.phone.value = data.phone || '';
       form.experience_years.value = data.experience_years ?? '';
     }}
-    fill(payload);
+    fill(CONFIG.payload);
 
     form.addEventListener('submit', async (event) => {{
       event.preventDefault();
       const body = Object.fromEntries(new FormData(form).entries());
       body.experience_years = Number(body.experience_years);
-      const res = await fetch('/api/edit/{instructor_id}', {{
-        method: 'PUT',
+      const res = await fetch(CONFIG.action || "{action}", {{
+        method: CONFIG.method || "{method}",
         headers: {{ 'Content-Type': 'application/json' }},
         body: JSON.stringify(body)
       }});
@@ -352,4 +302,9 @@ def render_edit_page(instructor_id: int, payload: dict[str, Any] | None) -> str:
 </html>"""
 
 
-__all__ = ["render_main_page", "render_details_page", "render_add_page", "render_edit_page"]
+def render_form_page(config: dict[str, Any]) -> str:
+    """Хелпер для обратной совместимости."""
+    return FormWindow(config).render()
+
+
+__all__ = ["render_main_page", "render_details_page", "FormWindow", "render_form_page"]

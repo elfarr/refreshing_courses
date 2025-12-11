@@ -1,0 +1,92 @@
+@startuml
+skinparam ParticipantPadding 20
+skinparam BoxPadding 15
+skinparam sequenceArrowThickness 1
+skinparam sequenceMessageAlign center
+skinparam LifeLineBorderColor #555
+skinparam LifeLineBorderThickness 1
+
+actor Пользователь
+participant "Браузер (главное)" as Main
+participant "Браузер (окно формы)" as FormWin
+box "HTTP-сервер\n(/, /details, /add, /edit, /api/*, /events)" #ddddff
+participant Сервер
+end box
+participant "AddController\n(логика добавления)" as AddCtl
+participant "EditController\n(логика редакт.)" as EditCtl
+participant "Наблюдаемый репозиторий" as RepoObs
+participant Хранилище
+
+==' Загрузка главной + подписка '==
+Пользователь -> Main : Открыть /
+Main -> Сервер : GET /
+Сервер -> EditCtl : list_profiles_payload()  ' через общий контроллер
+EditCtl -> RepoObs : get_k_n_short_list()
+RepoObs -> Хранилище : читать данные
+Хранилище --> RepoObs : список
+RepoObs --> EditCtl : PublicInstructorProfile[]
+EditCtl --> Сервер : DTO списка
+Сервер --> Main : HTML + стартовый JSON
+Main -> Сервер : GET /events
+Сервер -> EditCtl : subscribe(None)
+EditCtl --> Main : snapshot списка (SSE)
+
+==' Открыть окно добавления '==
+Пользователь -> Main : Клик "Добавить"
+Main -> Сервер : GET /add
+Сервер -> AddCtl : form_config()
+AddCtl --> Сервер : action=/api/add, method=POST, payload=None
+Сервер --> Main : HTML формы (единый шаблон)
+Main -> FormWin : открыть /add (новая вкладка)
+
+FormWin -> Сервер : POST /api/add {JSON}
+Сервер -> AddCtl : create_instructor(data)
+AddCtl -> RepoObs : add(...)
+RepoObs -> Хранилище : сохранить
+Хранилище --> RepoObs : ok
+RepoObs -> RepoObs : notify("created")
+RepoObs --> AddCtl : созданный
+AddCtl --> Сервер : DTO
+Сервер --> FormWin : 201 + JSON
+RepoObs --> Main : RepoEvent("created") (SSE) → refresh
+FormWin -> Main : postMessage(refresh-table)
+FormWin -> FormWin : закрыть окно
+
+==' Открыть окно редактирования '==
+Пользователь -> Main : Клик "Редактировать"
+Main -> Сервер : GET /edit?id=ID
+Сервер -> EditCtl : form_config(ID)
+EditCtl -> RepoObs : get_by_id(ID)
+RepoObs -> Хранилище : найти запись
+Хранилище --> RepoObs : Instructor
+RepoObs --> EditCtl : Instructor
+EditCtl --> Сервер : action=/api/edit/ID, method=PUT, payload=DTO
+Сервер --> Main : HTML формы (единый шаблон)
+Main -> FormWin : открыть /edit?id=ID (новая вкладка)
+
+FormWin -> Сервер : PUT /api/edit/ID {JSON}
+Сервер -> EditCtl : update_instructor(ID,data)
+EditCtl -> RepoObs : replace_by_id(ID,...)
+RepoObs -> Хранилище : переписать
+Хранилище --> RepoObs : ok
+RepoObs -> RepoObs : notify("updated")
+RepoObs --> EditCtl : True
+EditCtl --> Сервер : DTO
+Сервер --> FormWin : 200 + JSON
+RepoObs --> Main : RepoEvent("updated") (SSE) → обновить строку
+FormWin -> Main : postMessage(refresh-table)
+FormWin -> FormWin : закрыть окно
+
+==' Удаление (для полноты) '==
+Main -> Сервер : DELETE /api/instructors/{id}
+Сервер -> EditCtl : delete_instructor(id)
+EditCtl -> RepoObs : delete_by_id(id)
+RepoObs -> Хранилище : удалить
+Хранилище --> RepoObs : ok
+RepoObs -> RepoObs : notify("deleted")
+RepoObs --> EditCtl : True
+EditCtl --> Сервер : {"status":"deleted"}
+Сервер --> Main : 200 OK
+RepoObs --> Main : RepoEvent("deleted") (SSE)
+
+@enduml
